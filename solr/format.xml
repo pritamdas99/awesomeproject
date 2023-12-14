@@ -2,6 +2,15 @@
 <solr>
   <str name="ppp">vallol</str>
   <str name="key">val</str>
+  <metrics>
+    <hiddenSysProps>
+      <str>javax.net.ssl.keyStorePassword</str>
+      <str>javax.net.ssl.trustStorePassword</str>
+      <str>basicauth</str>
+      <str>zkDigestPassword</str>
+      <str>zkDigestReadonlyPassword</str>
+    </hiddenSysProps>
+  </metrics>
   <shardHandlerFactory class="HttpShardHandlerFactory">
     <int name="socketTimeout">${socketTimeout:600000}</int>
     <int name="connTimeout">${connTimeout:60000}</int>
@@ -29,5 +38,4 @@
     <bool name="genericCoreNodeNames">${post.genericCoreNodeNames:true}</bool>
     <str name="zkCredentialsProvider">${zkCredentialsProvider:org.apache.solr.common.cloud.DefaultZkCredentialsProvider}</str>
   </solrCloud>
-  <metrics enabled="${metricsEnabled:true}"/>
 </solr>

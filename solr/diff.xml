@@ -16,4 +16,13 @@
             </lst>
         </lst>
     </shardHandlerFactory>
+    <metrics>
+        <hiddenSysProps>
+            <str>javax.net.ssl.keyStorePassword</str>
+            <str>javax.net.ssl.trustStorePassword</str>
+            <str>basicauth</str>
+            <str>zkDigestPassword</str>
+            <str>zkDigestReadonlyPassword</str>
+        </hiddenSysProps>
+    </metrics>
 </solr>

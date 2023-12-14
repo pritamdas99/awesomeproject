@@ -112,6 +112,8 @@ function get_name {
 diff_length=${#diff_xml_lines[@]}
 target_length=${#target_xml_lines[@]}
 
+i1=-1
+i2=-1
 
 for ((i=0; i<diff_length; i++)); do
   result_array=($(string_to_array "${diff_xml_lines[i]}"))
@@ -202,9 +204,58 @@ if [[ "$i1" -ne -1 ]]; then
     fi
 fi
 
+i1=-1
+i2=-1
+
+
 diff_length=${#diff_xml_lines[@]}
 target_length=${#target_xml_lines[@]}
 
+for ((i=0; i<diff_length; i++)); do
+  result_array=($(string_to_array "${diff_xml_lines[i]}"))
+ # echo "echoing $i ${result_array[0]}"
+  diffName="${result_array[0]}"
+ # echo "check ${diffName}"
+  if [[ "${diffName}" == "metrics" ]]; then
+    i1=$i
+    #echo "how enetred here if diffname is ${diffName}"
+    break
+  fi
+done
+
+if [[ "$i1" -ne -1 ]]; then
+  for((i=i1+1; i<diff_length; i++)); do
+    result_array=($(string_to_array "${diff_xml_lines[i]}"))
+   # echo "${result_array[0]}"
+   # echo "echoing $i ${result_array[0]}"
+    diffName="${result_array[0]}"
+    if [[ ${diffName} == "metrics" ]]; then
+      i2=$i
+      break
+    fi
+  done
+
+  sliced_array=("${diff_xml_lines[@]:$i1:$((i2 - i1 + 1))}")
+  diff_xml_lines=("${diff_xml_lines[@]:0:$i1}" "${diff_xml_lines[@]:$((i2+1))}")
+  i1=-1
+  for ((i=0; i<target_length; i++)); do
+    result_array=($(string_to_array "${target_xml_lines[i]}"))
+    diffName="${result_array[0]}"
+    if [[ "${diffName}" == "metrics" ]]; then
+      i1=$i
+      break
+    fi
+  done
+  i2=i1 ;
+
+  target_xml_lines=("${target_xml_lines[@]:0:$i1}" "${target_xml_lines[@]:$((i2+1))}")
+  target_xml_lines=("${target_xml_lines[@]:0:2}" "${sliced_array[@]}" "${target_xml_lines[@]:2}")
+
+fi
+
+
+diff_length=${#diff_xml_lines[@]}
+target_length=${#target_xml_lines[@]}
 
 echo "$target_length target len "
 for ((i=0; i<diff_length; i++)); do
