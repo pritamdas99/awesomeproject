@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<solr>
+    <str name="key">val</str>
+    <solrCloud>
+        <str name="host">${solr.host:}</str>
+        <str name="keyy">valll</str>
+        <bool name="genericCoreNodeNames">${post.genericCoreNodeNames:true}</bool>
+    </solrCloud>
+    <str name="ppp">vallol</str>
+    <shardHandlerFactory name="shardHandlerFactory" class="HttpShardHandlerFactory">
+        <int name="socketTimeout">${socketTimeout:6000000000}</int>
+        <int name="connTimeoutnet">${connTimeout:60000}</int>
+    </shardHandlerFactory>
+</solr>
