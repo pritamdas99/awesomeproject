@@ -1,6 +1,6 @@
 #!/bin/bash
 
-
+sudo mkdir .
 # Specify the file name
 target="target.xml"
 
@@ -94,16 +94,9 @@ function get_name {
   local items=("$@")
 
   arr_length=${#items[@]}
-#  echo "arrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrreln${arr_length}"
-
   name="name"
   res=""
   for ((i=0; i<arr_length; i++)); do
-      # Check if the item is not an empty string
-#      echo "itemmmmmmmmmmmmmmm ${items[i]}"
-#      if [[ $i == 1 ]]; then
-#        echo "$i hhhahahahahahahah ${items[i]}"
-#      fi
       if [[ "${items[i]}" == "name" ]]; then
         # Add non-empty item to the new array
          res=${items[i+1]}
@@ -122,22 +115,22 @@ target_length=${#target_xml_lines[@]}
 
 for ((i=0; i<diff_length; i++)); do
   result_array=($(string_to_array "${diff_xml_lines[i]}"))
-  echo "echoing $i ${result_array[0]}"
+ # echo "echoing $i ${result_array[0]}"
   diffName="${result_array[0]}"
-  echo "check ${diffName}"
+ # echo "check ${diffName}"
   if [[ "${diffName}" == "shardHandlerFactory" ]]; then
     i1=$i
-    echo "how enetred here if diffname is ${diffName}"
+    #echo "how enetred here if diffname is ${diffName}"
     break
   fi
 done
-echo "i1 $i1"
+#echo "i1 $i1"
 
 if [[ "$i1" -ne -1 ]]; then
   for((i=i1+1; i<diff_length; i++)); do
     result_array=($(string_to_array "${diff_xml_lines[i]}"))
-    echo "${result_array[0]}"
-    echo "echoing $i ${result_array[0]}"
+   # echo "${result_array[0]}"
+   # echo "echoing $i ${result_array[0]}"
     diffName="${result_array[0]}"
     if [[ ${diffName} == "shardHandlerFactory" ]]; then
       i2=$i
@@ -146,15 +139,12 @@ if [[ "$i1" -ne -1 ]]; then
   done
   sliced_array=("${diff_xml_lines[@]:$i1:$((i2 - i1 + 1))}")
   diff_xml_lines=("${diff_xml_lines[@]:0:$i1}" "${diff_xml_lines[@]:$((i2+1))}")
-  echo "SLSIIIIIIIIIIIIIIIIIIIIII ${sliced_array[@]} ${#sliced_array[@]}"
-  echo "DIFF XMLLLLLLLLLLLLLLLLLLLLLLLL   ${diff_xml_lines[@]} ${#diff_xml_lines[@]}"
   f=0
   for item in ${sliced_array[@]}; do
     result_array=($(string_to_array ${item}))
     ln=${#result_array[@]}
     diffName=($(get_name "${result_array[@]}"))
     if [[ ${diffName} == "connTimeout" ]]; then
-      echo "connTimeout present"
       f=1
       break
     fi
@@ -167,7 +157,6 @@ if [[ "$i1" -ne -1 ]]; then
 
   f=0
   for item in ${sliced_array[@]}; do
-    echo "itetetetemmmmmmmmmm ${item}"
     result_array=($(string_to_array ${item}))
     ln=${#result_array[@]}
     diffName=($(get_name "${result_array[@]}"))
@@ -180,33 +169,25 @@ if [[ "$i1" -ne -1 ]]; then
   done
 
   if [[ $f == 0 ]]; then
-    echo "want to insert that socket"
     element='<int name="socketTimeout">${socketTimeout:600000}</int>'
-    echo "both sides are ${sliced_array[@]:0:1} and  ${sliced_array[@]:1}"
     sliced_array=("${sliced_array[@]:0:1}" "${element}" "${sliced_array[@]:1}")
   fi
 
-    echo "arrrrrrrrrrrrrrrrrrrrrr ${sliced_array[@]}"
 
     i1=-1
     i2=-1
 
     for ((i=0; i<target_length; i++)); do
       result_array=($(string_to_array "${target_xml_lines[i]}"))
-      echo "echoing $i ${result_array[0]}"
       diffName="${result_array[0]}"
-      echo "check ${diffName}"
       if [[ "${diffName}" == "shardHandlerFactory" ]]; then
         i1=$i
-        echo "how enetred here if diffname is ${diffName}"
         break
       fi
     done
     if [[ "$i1" -ne -1 ]]; then
       for((i=i1+1; i<target_length; i++)); do
         result_array=($(string_to_array "${diff_xml_lines[i]}"))
-        echo "${result_array[0]}"
-        echo "echoing $i ${result_array[0]}"
         diffName="${result_array[0]}"
         if [[ ${diffName} == "shardHandlerFactory" ]]; then
           i2=$i
@@ -219,8 +200,10 @@ if [[ "$i1" -ne -1 ]]; then
     else
       target_xml_lines=("${target_xml_lines[@]:0:2}" "${sliced_array[@]}" "${target_xml_lines[@]:2}")
     fi
-    echo "target xml lineeeeeeeeeeeeeeeeeeeeeeeee ${target_xml_lines[@]}"
 fi
+
+diff_length=${#diff_xml_lines[@]}
+target_length=${#target_xml_lines[@]}
 
 
 echo "$target_length target len "
@@ -240,7 +223,6 @@ for ((i=0; i<diff_length; i++)); do
     ff=0
     # check if same element exist in target xml or not
     for ((j=0; j<target_length; j++)); do
-      echo "$j ajaahahahahahahahahaha $target_length ${target_xml_lines[j]}"
       result_array=($(string_to_array "${target_xml_lines[j]}"))
       echo "line no. 114. result array for $j th element of target ${result_array[@]} ${#result_array[@]}"
       targetName=($(get_name "${result_array[@]}"))
@@ -353,9 +335,18 @@ for ((i=0; i<diff_length; i++)); do
   fi
 done
 
-for((i=0; i<10; i++));do
-  echo ""
-done
+#for((i=0; i<10; i++));do
+#  echo ""
+#done
+
+echo done
+
+echo "${target_xml_lines[@]}" > output.xml
+
+xmllint --format output.xml > format.xml
+
+sudo apt-get update
+sudo apt-get install -y libxml2-utils
 
 for item in "${target_xml_lines[@]}"; do
     # Check if the item is not an empty string

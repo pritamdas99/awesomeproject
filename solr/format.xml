@@ -1,23 +1,33 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <solr>
+  <str name="ppp">vallol</str>
+  <str name="key">val</str>
+  <shardHandlerFactory class="HttpShardHandlerFactory">
+    <int name="socketTimeout">${socketTimeout:600000}</int>
+    <int name="connTimeout">${connTimeout:60000}</int>
+    <lst name="replicaRouting">
+      <lst name="stable">
+        <bool name="default">true</bool>
+        <str name="dividend">routingDividend</str>
+        <str name="hash">q</str>
+      </lst>
+    </lst>
+  </shardHandlerFactory>
   <str name="coreRootDirectory">var/solr/data</str>
   <int name="maxBooleanClauses">${solr.max.booleanClauses:1024}</int>
   <str name="sharedLib">${solr.sharedLib:}</str>
   <str name="allowPaths">${allowPaths:}</str>
   <solrCloud>
+    <str name="keyy">valll</str>
+    <str name="host">${solr.host.fort:}</str>
     <int name="hostPort">${solr.port.advertise:80}</int>
     <str name="hostContext">${hostContext:solr}</str>
     <int name="zkClientTimeout">${zkClientTimeout:30000}</int>
     <int name="distribUpdateSoTimeout">${distribUpdateSoTimeout:600000}</int>
     <int name="distribUpdateConnTimeout">${distribUpdateConnTimeout:60000}</int>
     <str name="zkACLProvider">${zkACLProvider:org.apache.solr.common.cloud.DefaultZkACLProvider}</str>
-    <str name="host">${host:}</str>
-    <bool name="genericCoreNodeNames">${genericCoreNodeNames:true}</bool>
+    <bool name="genericCoreNodeNames">${post.genericCoreNodeNames:true}</bool>
     <str name="zkCredentialsProvider">${zkCredentialsProvider:org.apache.solr.common.cloud.DefaultZkCredentialsProvider}</str>
   </solrCloud>
-  <shardHandlerFactory name="shardHandlerFactory" class="HttpShardHandlerFactory">
-    <int name="socketTimeout">${socketTimeout:600000}</int>
-    <int name="connTimeout">${connTimeout:60000}</int>
-  </shardHandlerFactory>
   <metrics enabled="${metricsEnabled:true}"/>
 </solr>

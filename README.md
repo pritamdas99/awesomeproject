@@ -5,3 +5,4 @@ sudo chmod +x script.sh<br />
 #This script uses two xml files as input.<br /> 
 #one is target.xml which will be operator generated. <br />
 #another if diff.xml which is user provided.<br />
+#we can see formatted xml in format.xml

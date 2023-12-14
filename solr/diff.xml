@@ -2,7 +2,7 @@
 <solr>
     <str name="key">val</str>
     <solrCloud>
-        <str name="host">${solr.host:}</str>
+        <str name="host">${solr.host.fort:}</str>
         <str name="keyy">valll</str>
         <bool name="genericCoreNodeNames">${post.genericCoreNodeNames:true}</bool>
     </solrCloud>

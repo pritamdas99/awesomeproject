@@ -71,3 +71,4 @@ echo $arr_length
 srt=($(get_name "${result_array[@]}"))
 echo "srts $srt"
 echo done
+
