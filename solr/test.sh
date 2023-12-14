@@ -1,16 +1,18 @@
 #!/bin/bash
 
-# Arrays
-array1=("Item1" "Item2" "Item3")
-array2=("New1" "New2" "New3")
+# Example array
+my_array=("Item1" "Item2" "Item3" "Item4" "Item5")
 
-# Index where you want to insert array2 into array1 (assuming zero-based indexing)
-insert_index=1
+# Starting index for the slice
+start_index=1
 
-# Insert array2 into array1
-result_array=("${array1[@]:0:$insert_index}" "${array2[@]}" "${array1[@]:$insert_index}")
+# Ending index for the slice
+end_index=3
 
-# Print the resulting array
-for element in "${result_array[@]}"; do
-  echo "Element: $element"
+# Slice the array
+sliced_array=("${my_array[@]:$start_index:$((end_index - start_index + 1))}")
+
+# Print the sliced array
+for item in "${sliced_array[@]}"; do
+  echo "Item: $item"
 done

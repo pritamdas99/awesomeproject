@@ -27,7 +27,10 @@ IFS=$'\n'
 # Convert the string to an array
 target_xml_lines=($target_xml)
 
-#echo "${target_xml_lines[@]}"
+  for item in "${target_xml_lines[@]}"; do
+    # Check if the item is not an empty string
+   echo "${item}"
+  done
 
 IFS=$old_ifs
 
@@ -55,6 +58,10 @@ IFS=$'\n'
 
 # Convert the string to an array
 diff_xml_lines=($diff_xml)
+
+i1=-1
+i2=-1
+
 
 #echo ${diff_xml_lines[@]}
 #echo starting...
@@ -111,11 +118,121 @@ function get_name {
 
 diff_length=${#diff_xml_lines[@]}
 target_length=${#target_xml_lines[@]}
+
+
+for ((i=0; i<diff_length; i++)); do
+  result_array=($(string_to_array "${diff_xml_lines[i]}"))
+  echo "echoing $i ${result_array[0]}"
+  diffName="${result_array[0]}"
+  echo "check ${diffName}"
+  if [[ "${diffName}" == "shardHandlerFactory" ]]; then
+    i1=$i
+    echo "how enetred here if diffname is ${diffName}"
+    break
+  fi
+done
+echo "i1 $i1"
+
+if [[ "$i1" -ne -1 ]]; then
+  for((i=i1+1; i<diff_length; i++)); do
+    result_array=($(string_to_array "${diff_xml_lines[i]}"))
+    echo "${result_array[0]}"
+    echo "echoing $i ${result_array[0]}"
+    diffName="${result_array[0]}"
+    if [[ ${diffName} == "shardHandlerFactory" ]]; then
+      i2=$i
+      break
+    fi
+  done
+  sliced_array=("${diff_xml_lines[@]:$i1:$((i2 - i1 + 1))}")
+  diff_xml_lines=("${diff_xml_lines[@]:0:$i1}" "${diff_xml_lines[@]:$((i2+1))}")
+  echo "SLSIIIIIIIIIIIIIIIIIIIIII ${sliced_array[@]} ${#sliced_array[@]}"
+  echo "DIFF XMLLLLLLLLLLLLLLLLLLLLLLLL   ${diff_xml_lines[@]} ${#diff_xml_lines[@]}"
+  f=0
+  for item in ${sliced_array[@]}; do
+    result_array=($(string_to_array ${item}))
+    ln=${#result_array[@]}
+    diffName=($(get_name "${result_array[@]}"))
+    if [[ ${diffName} == "connTimeout" ]]; then
+      echo "connTimeout present"
+      f=1
+      break
+    fi
+  done
+
+  if [[ $f == 0 ]]; then
+    element='<int name="connTimeout">${connTimeout:60000}</int>'
+    sliced_array=("${sliced_array[@]:0:1}" "${element}" "${sliced_array[@]:1}")
+  fi
+
+  f=0
+  for item in ${sliced_array[@]}; do
+    echo "itetetetemmmmmmmmmm ${item}"
+    result_array=($(string_to_array ${item}))
+    ln=${#result_array[@]}
+    diffName=($(get_name "${result_array[@]}"))
+    echo "diffname ${diffName}"
+    if [[ ${diffName} == "socketTimeout" ]]; then
+      echo "socket timeout present"
+      f=1
+      break
+    fi
+  done
+
+  if [[ $f == 0 ]]; then
+    echo "want to insert that socket"
+    element='<int name="socketTimeout">${socketTimeout:600000}</int>'
+    echo "both sides are ${sliced_array[@]:0:1} and  ${sliced_array[@]:1}"
+    sliced_array=("${sliced_array[@]:0:1}" "${element}" "${sliced_array[@]:1}")
+  fi
+
+    echo "arrrrrrrrrrrrrrrrrrrrrr ${sliced_array[@]}"
+
+    i1=-1
+    i2=-1
+
+    for ((i=0; i<target_length; i++)); do
+      result_array=($(string_to_array "${target_xml_lines[i]}"))
+      echo "echoing $i ${result_array[0]}"
+      diffName="${result_array[0]}"
+      echo "check ${diffName}"
+      if [[ "${diffName}" == "shardHandlerFactory" ]]; then
+        i1=$i
+        echo "how enetred here if diffname is ${diffName}"
+        break
+      fi
+    done
+    if [[ "$i1" -ne -1 ]]; then
+      for((i=i1+1; i<target_length; i++)); do
+        result_array=($(string_to_array "${diff_xml_lines[i]}"))
+        echo "${result_array[0]}"
+        echo "echoing $i ${result_array[0]}"
+        diffName="${result_array[0]}"
+        if [[ ${diffName} == "shardHandlerFactory" ]]; then
+          i2=$i
+          break
+        fi
+      done
+      target_xml_lines=("${target_xml_lines[@]:0:$i1}" "${target_xml_lines[@]:$((i2+1))}")
+      target_xml_lines=("${target_xml_lines[@]:0:2}" "${sliced_array[@]}" "${target_xml_lines[@]:2}")
+
+    else
+      target_xml_lines=("${target_xml_lines[@]:0:2}" "${sliced_array[@]}" "${target_xml_lines[@]:2}")
+    fi
+    echo "target xml lineeeeeeeeeeeeeeeeeeeeeeeee ${target_xml_lines[@]}"
+fi
+
+
 echo "$target_length target len "
 for ((i=0; i<diff_length; i++)); do
   result_array=($(string_to_array ${diff_xml_lines[i]}))
   ln=${#result_array[@]}
   diffName=($(get_name "${result_array[@]}"))
+  type=${result_array[0]}
+  echo $type
+  if [[ $type != "bool" && $type != "int" && $type != "str" ]]; then
+    continue
+  fi
   echo "line no. 106 type name of diff ${diffName}"
 
   # element of diff has name property
@@ -235,9 +352,10 @@ for ((i=0; i<diff_length; i++)); do
     done
   fi
 done
-echo done
 
-echo ${target_xml_lines[@]}
+for((i=0; i<10; i++));do
+  echo ""
+done
 
 for item in "${target_xml_lines[@]}"; do
     # Check if the item is not an empty string

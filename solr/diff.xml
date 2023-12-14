@@ -7,8 +7,13 @@
         <bool name="genericCoreNodeNames">${post.genericCoreNodeNames:true}</bool>
     </solrCloud>
     <str name="ppp">vallol</str>
-    <shardHandlerFactory name="shardHandlerFactory" class="HttpShardHandlerFactory">
-        <int name="socketTimeout">${socketTimeout:6000000000}</int>
-        <int name="connTimeoutnet">${connTimeout:60000}</int>
+    <shardHandlerFactory class="HttpShardHandlerFactory">
+        <lst name="replicaRouting">
+            <lst name="stable">
+                <bool name="default">true</bool>
+                <str name="dividend">routingDividend</str>
+                <str name="hash">q</str>
+            </lst>
+        </lst>
     </shardHandlerFactory>
 </solr>

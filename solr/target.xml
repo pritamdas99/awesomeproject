@@ -8,11 +8,8 @@
         <int name="zkClientTimeout">${zkClientTimeout:30000}</int><int name="distribUpdateSoTimeout">${distribUpdateSoTimeout:600000}</int>
         <int name="distribUpdateConnTimeout">${distribUpdateConnTimeout:60000}</int>
         <str name="zkACLProvider">${zkACLProvider:org.apache.solr.common.cloud.DefaultZkACLProvider}</str>
-        <str name="host">${host:}</str>
         <bool name="genericCoreNodeNames">${genericCoreNodeNames:true}</bool>
         <str name="zkCredentialsProvider">${zkCredentialsProvider:org.apache.solr.common.cloud.DefaultZkCredentialsProvider}</str>
     </solrCloud>
-    <shardHandlerFactory name="shardHandlerFactory" class="HttpShardHandlerFactory">
-        <int name="socketTimeout">${socketTimeout:600000}</int><int name="connTimeout">${connTimeout:60000}</int></shardHandlerFactory>
     <metrics enabled="${metricsEnabled:true}"/>
 </solr>
