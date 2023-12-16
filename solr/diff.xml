@@ -25,4 +25,12 @@
             <str>zkDigestReadonlyPassword</str>
         </hiddenSysProps>
     </metrics>
+    <caches name="myNodeLevelUserCache"
+               class="solr.CaffeineCache"
+               size="4096"
+               initialSize="1024" />
+    <logging>
+        <str name="some">thing</str>
+    </logging>
+
 </solr>

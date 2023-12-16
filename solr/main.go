@@ -2,8 +2,8 @@ package main
 
 import (
 	"fmt"
-	xmlpatch "github.com/maxyurk/go-xml-patch"
-	"os"
+	//xmlpatch "github.com/maxyurk/go-xml-patch"
+	//"os"
 	"reflect"
 )
 
@@ -141,17 +141,17 @@ func main() {
 	sd := "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n<solr>\n  <str name=\"key\">val</str>\n  <solrCloud>\n     <str name=\"host\">${solr.host:}</str>\n  </solrCloud>\n</solr>"
 	fmt.Println(sd)
 
-	target, err := os.ReadFile("target.xml")
-	if err != nil {
-		fmt.Println("error 1", err)
-	}
-	diff, err := os.ReadFile("diff.xml")
-	if err != nil {
-		fmt.Println("error 2", err)
-	}
-	patch, err := xmlpatch.Patch(target, diff)
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println(patch)
+	//target, err := os.ReadFile("target.xml")
+	//if err != nil {
+	//	fmt.Println("error 1", err)
+	//}
+	//diff, err := os.ReadFile("diff.xml")
+	//if err != nil {
+	//	fmt.Println("error 2", err)
+	//}
+	//patch, err := xmlpatch.Patch(target, diff)
+	//if err != nil {
+	//	panic(err)
+	//}
+	//fmt.Println(patch)
 }

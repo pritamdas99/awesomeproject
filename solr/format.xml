@@ -2,6 +2,10 @@
 <solr>
   <str name="ppp">vallol</str>
   <str name="key">val</str>
+  <logging>
+    <str name="some">thing</str>
+  </logging>
+  <caches name="myNodeLevelUserCache" class="solr.CaffeineCache" size="4096" initialSize="1024"/>
   <metrics>
     <hiddenSysProps>
       <str>javax.net.ssl.keyStorePassword</str>
