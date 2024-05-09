@@ -62,9 +62,6 @@ github.com/go-openapi/jsonreference/internal
 # github.com/go-openapi/swag v0.22.4
 ## explicit; go 1.18
 github.com/go-openapi/swag
-# github.com/go-resty/resty/v2 v2.11.0
-## explicit; go 1.16
-github.com/go-resty/resty/v2
 # github.com/go-sql-driver/mysql v1.7.1
 ## explicit; go 1.13
 github.com/go-sql-driver/mysql
@@ -248,7 +245,6 @@ golang.org/x/net/http/httpguts
 golang.org/x/net/http2
 golang.org/x/net/http2/hpack
 golang.org/x/net/idna
-golang.org/x/net/publicsuffix
 # golang.org/x/oauth2 v0.15.0
 ## explicit; go 1.18
 golang.org/x/oauth2
@@ -773,9 +769,6 @@ kubedb.dev/apimachinery/crds
 kubedb.dev/apimachinery/pkg/double_optin
 kubedb.dev/apimachinery/pkg/factory
 kubedb.dev/apimachinery/pkg/validator
-# kubedb.dev/db-client-go v0.0.16-0.20240508114233-bd1af68b4d0f
-## explicit; go 1.22.0
-kubedb.dev/db-client-go/solr
 # kubeops.dev/petset v0.0.5
 ## explicit; go 1.21.5
 kubeops.dev/petset/apis/apps/v1

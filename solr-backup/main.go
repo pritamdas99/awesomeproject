@@ -2,11 +2,14 @@ package main
 
 import (
 	"fmt"
+	"k8s.io/client-go/kubernetes/scheme"
 	"kmodules.xyz/client-go/tools/clientcmd"
 	"kubedb.dev/apimachinery/pkg/factory"
 	"os"
 	"path/filepath"
 
+	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
+	clientSetScheme "k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/util/homedir"
 )
 
@@ -20,6 +23,10 @@ var (
 	}()
 	kubeContext = ""
 )
+
+func init() {
+	utilruntime.Must(scheme.AddToScheme(clientSetScheme.Scheme))
+}
 
 func main() {
 	fmt.Println("start........................")
