@@ -21,6 +21,7 @@ import (
 	"fmt"
 
 	catalog "kubedb.dev/apimachinery/apis/catalog/v1alpha1"
+	"kubedb.dev/apimachinery/apis/kubedb"
 
 	"github.com/pkg/errors"
 	"gomodules.xyz/x/arrays"
@@ -47,8 +48,6 @@ func (p *Pgpool) SetupWebhookWithManager(mgr ctrl.Manager) error {
 		For(p).
 		Complete()
 }
-
-// TODO(user): EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 
 //+kubebuilder:webhook:path=/mutate-kubedb-com-v1alpha2-pgpool,mutating=true,failurePolicy=fail,sideEffects=None,groups=kubedb.com,resources=pgpools,verbs=create;update,versions=v1alpha2,name=mpgpool.kb.io,admissionReviewVersions=v1
 
@@ -91,7 +90,7 @@ func (p *Pgpool) ValidateDelete() (admission.Warnings, error) {
 	pgpoollog.Info("validate delete", "name", p.Name)
 
 	var errorList field.ErrorList
-	if p.Spec.TerminationPolicy == TerminationPolicyDoNotTerminate {
+	if p.Spec.DeletionPolicy == TerminationPolicyDoNotTerminate {
 		errorList = append(errorList, field.Invalid(field.NewPath("spec").Child("terminationPolicy"),
 			p.Name,
 			"Can not delete as terminationPolicy is set to \"DoNotTerminate\""))
@@ -121,30 +120,41 @@ func (p *Pgpool) ValidateCreateOrUpdate() field.ErrorList {
 		))
 	}
 
-	apb := appcat.AppBinding{}
-	err := DefaultClient.Get(context.TODO(), types.NamespacedName{
-		Name:      p.Spec.PostgresRef.Name,
-		Namespace: p.Spec.PostgresRef.Namespace,
-	}, &apb)
-	if err != nil {
-		errorList = append(errorList, field.Invalid(field.NewPath("spec").Child("postgresRef"),
+	if p.Spec.ConfigSecret != nil && (p.Spec.InitConfiguration != nil && p.Spec.InitConfiguration.PgpoolConfig != nil) {
+		errorList = append(errorList, field.Invalid(field.NewPath("spec").Child("configSecret"),
 			p.Name,
-			err.Error(),
-		))
+			"use either `spec.configSecret` or `spec.initConfig`"))
+		errorList = append(errorList, field.Invalid(field.NewPath("spec").Child("initConfig"),
+			p.Name,
+			"use either `spec.configSecret` or `spec.initConfig`"))
 	}
 
-	backendSSL, err := p.IsBackendTLSEnabled()
-	if err != nil {
-		errorList = append(errorList, field.Invalid(field.NewPath("spec").Child("postgresRef"),
-			p.Name,
-			err.Error(),
-		))
-	}
+	if p.ObjectMeta.DeletionTimestamp == nil {
+		apb := appcat.AppBinding{}
+		err := DefaultClient.Get(context.TODO(), types.NamespacedName{
+			Name:      p.Spec.PostgresRef.Name,
+			Namespace: p.Spec.PostgresRef.Namespace,
+		}, &apb)
+		if err != nil {
+			errorList = append(errorList, field.Invalid(field.NewPath("spec").Child("postgresRef"),
+				p.Name,
+				err.Error(),
+			))
+		}
 
-	if p.Spec.TLS == nil && backendSSL {
-		errorList = append(errorList, field.Required(field.NewPath("spec").Child("tls"),
-			"`spec.tls` must be set because backend postgres is tls enabled",
-		))
+		backendSSL, err := p.IsBackendTLSEnabled()
+		if err != nil {
+			errorList = append(errorList, field.Invalid(field.NewPath("spec").Child("postgresRef"),
+				p.Name,
+				err.Error(),
+			))
+		}
+
+		if p.Spec.TLS == nil && backendSSL {
+			errorList = append(errorList, field.Required(field.NewPath("spec").Child("tls"),
+				"`spec.tls` must be set because backend postgres is tls enabled",
+			))
+		}
 	}
 
 	if p.Spec.TLS == nil {
@@ -249,8 +259,8 @@ func PgpoolValidateVersion(p *Pgpool) error {
 }
 
 var PgpoolReservedVolumes = []string{
-	PgpoolConfigVolumeName,
-	PgpoolTlsVolumeName,
+	kubedb.PgpoolConfigVolumeName,
+	kubedb.PgpoolTlsVolumeName,
 }
 
 func PgpoolValidateVolumes(p *Pgpool) error {
@@ -269,13 +279,13 @@ func PgpoolValidateVolumes(p *Pgpool) error {
 }
 
 var PgpoolForbiddenEnvVars = []string{
-	EnvPostgresUsername, EnvPostgresPassword, EnvPgpoolPcpUser, EnvPgpoolPcpPassword,
-	EnvPgpoolPasswordEncryptionMethod, EnvEnablePoolPasswd, EnvSkipPasswdEncryption,
+	kubedb.EnvPostgresUsername, kubedb.EnvPostgresPassword, kubedb.EnvPgpoolPcpUser, kubedb.EnvPgpoolPcpPassword,
+	kubedb.EnvPgpoolPasswordEncryptionMethod, kubedb.EnvEnablePoolPasswd, kubedb.EnvSkipPasswdEncryption,
 }
 
 func PgpoolGetMainContainerEnvs(p *Pgpool) []core.EnvVar {
 	for _, container := range p.Spec.PodTemplate.Spec.Containers {
-		if container.Name == PgpoolContainerName {
+		if container.Name == kubedb.PgpoolContainerName {
 			return container.Env
 		}
 	}
@@ -321,6 +331,6 @@ func PgpoolValidateVolumesMountPaths(podTemplate *ofst.PodTemplateSpec) error {
 }
 
 var PgpoolReservedVolumesMountPaths = []string{
-	PgpoolConfigSecretMountPath,
-	PgpoolTlsVolumeMountPath,
+	kubedb.PgpoolConfigSecretMountPath,
+	kubedb.PgpoolTlsVolumeMountPath,
 }

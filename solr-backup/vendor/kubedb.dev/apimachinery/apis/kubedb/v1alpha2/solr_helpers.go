@@ -17,7 +17,10 @@ limitations under the License.
 package v1alpha2
 
 import (
+	"context"
 	"fmt"
+	"path/filepath"
+	"sort"
 	"strings"
 
 	"kubedb.dev/apimachinery/apis"
@@ -30,6 +33,9 @@ import (
 	v1 "k8s.io/api/core/v1"
 	meta "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/klog/v2"
+	kmapi "kmodules.xyz/client-go/api/v1"
 	"kmodules.xyz/client-go/apiextensions"
 	coreutil "kmodules.xyz/client-go/core/v1"
 	meta_util "kmodules.xyz/client-go/meta"
@@ -92,7 +98,7 @@ func (s *Solr) SolrSecretName(suffix string) string {
 }
 
 func (s *Solr) SolrSecretKey() string {
-	return SolrSecretKey
+	return kubedb.SolrSecretKey
 }
 
 func (s *Solr) Merge(opt map[string]string) map[string]string {
@@ -110,13 +116,18 @@ func (s *Solr) Merge(opt map[string]string) map[string]string {
 }
 
 func (s *Solr) Append(opt map[string]string) string {
+	key := make([]string, 0)
+	for x := range opt {
+		key = append(key, x)
+	}
+	sort.Strings(key)
 	fl := 0
 	as := ""
-	for x, y := range opt {
+	for _, x := range key {
 		if fl == 1 {
 			as += " "
 		}
-		as += fmt.Sprintf("%s=%s", x, y)
+		as += fmt.Sprintf("%s=%s", x, opt[x])
 		fl = 1
 
 	}
@@ -140,7 +151,7 @@ func (s *Solr) OffshootLabels() map[string]string {
 }
 
 func (s *Solr) offshootLabels(selector, override map[string]string) map[string]string {
-	selector[meta_util.ComponentLabelKey] = ComponentDatabase
+	selector[meta_util.ComponentLabelKey] = kubedb.ComponentDatabase
 	return meta_util.FilterKeys(kubedb.GroupName, selector, meta_util.OverwriteKeys(nil, s.Labels, override))
 }
 
@@ -207,7 +218,7 @@ func (s solrStatsService) ServiceMonitorAdditionalLabels() map[string]string {
 }
 
 func (s solrStatsService) Path() string {
-	return DefaultStatsPath
+	return kubedb.DefaultStatsPath
 }
 
 func (s solrStatsService) Scheme() string {
@@ -218,21 +229,33 @@ func (s solrStatsService) TLSConfig() *promapi.TLSConfig {
 	return nil
 }
 
+func (s *Solr) SetTLSDefaults() {
+	if s.Spec.TLS == nil || s.Spec.TLS.IssuerRef == nil {
+		return
+	}
+	s.Spec.TLS.Certificates = kmapi.SetMissingSecretNameForCertificate(s.Spec.TLS.Certificates, string(SolrServerCert), s.CertificateName(SolrServerCert))
+	s.Spec.TLS.Certificates = kmapi.SetMissingSecretNameForCertificate(s.Spec.TLS.Certificates, string(SolrClientCert), s.CertificateName(SolrClientCert))
+}
+
 func (s *Solr) StatsService() mona.StatsAccessor {
 	return &solrStatsService{s}
 }
 
 func (s *Solr) StatsServiceLabels() map[string]string {
-	return s.ServiceLabels(StatsServiceAlias, map[string]string{LabelRole: RoleStats})
+	return s.ServiceLabels(StatsServiceAlias, map[string]string{kubedb.LabelRole: kubedb.RoleStats})
 }
 
 func (s *Solr) PVCName(alias string) string {
 	return meta_util.NameWithSuffix(s.Name, alias)
 }
 
-func (s *Solr) SetDefaults(slVersion *catalog.SolrVersion) {
-	if s.Spec.TerminationPolicy == "" {
-		s.Spec.TerminationPolicy = TerminationPolicyDelete
+func (s *Solr) SetDefaults() {
+	if s.Spec.DeletionPolicy == "" {
+		s.Spec.DeletionPolicy = TerminationPolicyDelete
+	}
+
+	if s.Spec.JavaMem == "" {
+		s.Spec.JavaMem = kubedb.SolrJavaMem
 	}
 
 	if s.Spec.StorageType == "" {
@@ -242,6 +265,12 @@ func (s *Solr) SetDefaults(slVersion *catalog.SolrVersion) {
 	if s.Spec.AuthSecret == nil {
 		s.Spec.AuthSecret = &v1.LocalObjectReference{
 			Name: s.SolrSecretName("admin-cred"),
+		}
+	}
+
+	if s.Spec.KeystoreSecret == nil {
+		s.Spec.KeystoreSecret = &v1.LocalObjectReference{
+			Name: s.SolrSecretName("keystore-cred"),
 		}
 	}
 
@@ -263,6 +292,15 @@ func (s *Solr) SetDefaults(slVersion *catalog.SolrVersion) {
 		}
 	}
 
+	var slVersion catalog.SolrVersion
+	err := DefaultClient.Get(context.TODO(), types.NamespacedName{
+		Name: s.Spec.Version,
+	}, &slVersion)
+	if err != nil {
+		klog.Errorf("can't get the solr version object %s for %s \n", err.Error(), s.Spec.Version)
+		return
+	}
+
 	if s.Spec.Topology != nil {
 		if s.Spec.Topology.Data != nil {
 			if s.Spec.Topology.Data.Suffix == "" {
@@ -275,7 +313,7 @@ func (s *Solr) SetDefaults(slVersion *catalog.SolrVersion) {
 				s.Spec.Topology.Data.PodTemplate.Spec.SecurityContext = &v1.PodSecurityContext{}
 			}
 			s.Spec.Topology.Data.PodTemplate.Spec.SecurityContext.FSGroup = slVersion.Spec.SecurityContext.RunAsUser
-			s.setDefaultContainerSecurityContext(slVersion, &s.Spec.Topology.Data.PodTemplate)
+			s.setDefaultContainerSecurityContext(&slVersion, &s.Spec.Topology.Data.PodTemplate)
 			s.setDefaultContainerResourceLimits(&s.Spec.Topology.Data.PodTemplate)
 
 		}
@@ -291,7 +329,7 @@ func (s *Solr) SetDefaults(slVersion *catalog.SolrVersion) {
 				s.Spec.Topology.Overseer.PodTemplate.Spec.SecurityContext = &v1.PodSecurityContext{}
 			}
 			s.Spec.Topology.Overseer.PodTemplate.Spec.SecurityContext.FSGroup = slVersion.Spec.SecurityContext.RunAsUser
-			s.setDefaultContainerSecurityContext(slVersion, &s.Spec.Topology.Overseer.PodTemplate)
+			s.setDefaultContainerSecurityContext(&slVersion, &s.Spec.Topology.Overseer.PodTemplate)
 			s.setDefaultContainerResourceLimits(&s.Spec.Topology.Overseer.PodTemplate)
 		}
 
@@ -306,7 +344,7 @@ func (s *Solr) SetDefaults(slVersion *catalog.SolrVersion) {
 				s.Spec.Topology.Coordinator.PodTemplate.Spec.SecurityContext = &v1.PodSecurityContext{}
 			}
 			s.Spec.Topology.Coordinator.PodTemplate.Spec.SecurityContext.FSGroup = slVersion.Spec.SecurityContext.RunAsUser
-			s.setDefaultContainerSecurityContext(slVersion, &s.Spec.Topology.Coordinator.PodTemplate)
+			s.setDefaultContainerSecurityContext(&slVersion, &s.Spec.Topology.Coordinator.PodTemplate)
 			s.setDefaultContainerResourceLimits(&s.Spec.Topology.Coordinator.PodTemplate)
 		}
 	} else {
@@ -317,7 +355,7 @@ func (s *Solr) SetDefaults(slVersion *catalog.SolrVersion) {
 			s.Spec.PodTemplate.Spec.SecurityContext = &v1.PodSecurityContext{}
 		}
 		s.Spec.PodTemplate.Spec.SecurityContext.FSGroup = slVersion.Spec.SecurityContext.RunAsUser
-		s.setDefaultContainerSecurityContext(slVersion, &s.Spec.PodTemplate)
+		s.setDefaultContainerSecurityContext(&slVersion, &s.Spec.PodTemplate)
 		s.setDefaultContainerResourceLimits(&s.Spec.PodTemplate)
 	}
 
@@ -326,17 +364,19 @@ func (s *Solr) SetDefaults(slVersion *catalog.SolrVersion) {
 			s.Spec.Monitor.Prometheus = &mona.PrometheusSpec{}
 		}
 		if s.Spec.Monitor.Prometheus != nil && s.Spec.Monitor.Prometheus.Exporter.Port == 0 {
-			s.Spec.Monitor.Prometheus.Exporter.Port = SolrExporterPort
+			s.Spec.Monitor.Prometheus.Exporter.Port = kubedb.SolrExporterPort
 		}
 		s.Spec.Monitor.SetDefaults()
 	}
+
+	s.SetTLSDefaults()
 }
 
 func (s *Solr) setDefaultContainerSecurityContext(slVersion *catalog.SolrVersion, podTemplate *ofst.PodTemplateSpec) {
-	initContainer := coreutil.GetContainerByName(podTemplate.Spec.InitContainers, SolrInitContainerName)
+	initContainer := coreutil.GetContainerByName(podTemplate.Spec.InitContainers, kubedb.SolrInitContainerName)
 	if initContainer == nil {
 		initContainer = &v1.Container{
-			Name: SolrInitContainerName,
+			Name: kubedb.SolrInitContainerName,
 		}
 	}
 	if initContainer.SecurityContext == nil {
@@ -344,10 +384,10 @@ func (s *Solr) setDefaultContainerSecurityContext(slVersion *catalog.SolrVersion
 	}
 	s.assignDefaultContainerSecurityContext(slVersion, initContainer.SecurityContext)
 	podTemplate.Spec.InitContainers = coreutil.UpsertContainer(podTemplate.Spec.InitContainers, *initContainer)
-	container := coreutil.GetContainerByName(podTemplate.Spec.Containers, SolrContainerName)
+	container := coreutil.GetContainerByName(podTemplate.Spec.Containers, kubedb.SolrContainerName)
 	if container == nil {
 		container = &v1.Container{
-			Name: SolrContainerName,
+			Name: kubedb.SolrContainerName,
 		}
 	}
 	if container.SecurityContext == nil {
@@ -378,14 +418,14 @@ func (s *Solr) assignDefaultContainerSecurityContext(slVersion *catalog.SolrVers
 }
 
 func (s *Solr) setDefaultContainerResourceLimits(podTemplate *ofst.PodTemplateSpec) {
-	dbContainer := coreutil.GetContainerByName(podTemplate.Spec.Containers, SolrContainerName)
+	dbContainer := coreutil.GetContainerByName(podTemplate.Spec.Containers, kubedb.SolrContainerName)
 	if dbContainer != nil && (dbContainer.Resources.Requests == nil && dbContainer.Resources.Limits == nil) {
-		apis.SetDefaultResourceLimits(&dbContainer.Resources, DefaultResourcesCoreAndMemoryIntensiveSolr)
+		apis.SetDefaultResourceLimits(&dbContainer.Resources, kubedb.DefaultResourcesCoreAndMemoryIntensiveSolr)
 	}
 
-	initContainer := coreutil.GetContainerByName(podTemplate.Spec.InitContainers, SolrInitContainerName)
+	initContainer := coreutil.GetContainerByName(podTemplate.Spec.InitContainers, kubedb.SolrInitContainerName)
 	if initContainer != nil && (initContainer.Resources.Requests == nil && initContainer.Resources.Limits == nil) {
-		apis.SetDefaultResourceLimits(&initContainer.Resources, DefaultInitContainerResource)
+		apis.SetDefaultResourceLimits(&initContainer.Resources, kubedb.DefaultInitContainerResource)
 	}
 }
 
@@ -434,4 +474,39 @@ func (s *Solr) ReplicasAreReady(lister pslister.PetSetLister) (bool, string, err
 		expectedItems = 3
 	}
 	return checkReplicasOfPetSet(lister.PetSets(s.Namespace), labels.SelectorFromSet(s.OffshootLabels()), expectedItems)
+}
+
+// CertificateName returns the default certificate name and/or certificate secret name for a certificate alias
+func (s *Solr) CertificateName(alias SolrCertificateAlias) string {
+	return meta_util.NameWithSuffix(s.Name, fmt.Sprintf("%s-cert", string(alias)))
+}
+
+// ClientCertificateCN returns the CN for a client certificate
+func (s *Solr) ClientCertificateCN(alias SolrCertificateAlias) string {
+	return fmt.Sprintf("%s-%s", s.Name, string(alias))
+}
+
+// GetCertSecretName returns the secret name for a certificate alias if any,
+// otherwise returns default certificate secret name for the given alias.
+func (s *Solr) GetCertSecretName(alias SolrCertificateAlias) string {
+	if s.Spec.TLS != nil {
+		name, ok := kmapi.GetCertificateSecretName(s.Spec.TLS.Certificates, string(alias))
+		if ok {
+			return name
+		}
+	}
+	return s.CertificateName(alias)
+}
+
+// CertSecretVolumeName returns the CertSecretVolumeName
+// Values will be like: client-certs, server-certs etc.
+func (s *Solr) CertSecretVolumeName(alias SolrCertificateAlias) string {
+	return string(alias) + "-certs"
+}
+
+// CertSecretVolumeMountPath returns the CertSecretVolumeMountPath
+// if configDir is "/opt/kafka/config",
+// mountPath will be, "/opt/kafka/config/<alias>".
+func (s *Solr) CertSecretVolumeMountPath(configDir string, cert string) string {
+	return filepath.Join(configDir, cert)
 }

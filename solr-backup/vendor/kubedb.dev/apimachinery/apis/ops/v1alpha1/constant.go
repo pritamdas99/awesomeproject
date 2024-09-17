@@ -169,6 +169,8 @@ const (
 	VolumeExpansionMLNode           = "VolumeExpansionMLNode"
 	VolumeExpansionTransformNode    = "VolumeExpansionTransformNode"
 	VolumeExpansionCoordinatingNode = "VolumeExpansionCoordinatingNode"
+	VolumeExpansionOverseerNode     = "VolumeExpansionOverseerNode"
+	VolumeExpansionCoordinatorNode  = "VolumeExpansionCoordinatorNode"
 )
 
 // Kafka Constants
@@ -183,6 +185,14 @@ const (
 	UpdateBrokerNodePVCs     = "UpdateBrokerNodePVCs"
 	UpdateControllerNodePVCs = "UpdateControllerNodePVCs"
 	UpdateCombinedNodePVCs   = "UpdateCombinedNodePVCs"
+)
+
+// Singlestore Constants
+const (
+	ScaleUpAggregator   = "ScaleUpAggregator"
+	ScaleDownAggregator = "ScaleDownAggregator"
+	ScaleUpLeaf         = "ScaleUpLeaf"
+	ScaleDownLeaf       = "ScaleDownLeaf"
 )
 
 // RabbitMQ Constants
@@ -286,4 +296,16 @@ const (
 	HorizontalScaleReplicasDown = "HorizontalScaleReplicasDown"
 	HorizontalScaleSentinelUp   = "HorizontalScaleSentinelUp"
 	HorizontalScaleSentinelDown = "HorizontalScaleSentinelDown"
+)
+
+// Druid Constants
+const (
+	UpdateMiddleManagersNodePVCs = "UpdateMiddleManagersNodePVCs"
+	UpdateHistoricalsNodePVCs    = "UpdateHistoricalsNodePVCs"
+)
+
+// SingleStore Constants
+const (
+	UpdateAggregatorNodePVCs = "UpdateAggregatorNodePVCs"
+	UpdateLeafNodePVCs       = "UpdateLeafNodePVCs"
 )

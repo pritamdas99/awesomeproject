@@ -21,7 +21,7 @@ import (
 	"errors"
 	"fmt"
 
-	dbapi "kubedb.dev/apimachinery/apis/kubedb/v1alpha2"
+	olddbapi "kubedb.dev/apimachinery/apis/kubedb/v1alpha2"
 	opsapi "kubedb.dev/apimachinery/apis/ops/v1alpha1"
 
 	"k8s.io/apimachinery/pkg/runtime"
@@ -43,7 +43,7 @@ func (r *RabbitMQAutoscaler) Default() {
 }
 
 func (r *RabbitMQAutoscaler) setDefaults() {
-	var db dbapi.RabbitMQ
+	var db olddbapi.RabbitMQ
 	err := DefaultClient.Get(context.TODO(), types.NamespacedName{
 		Name:      r.Spec.DatabaseRef.Name,
 		Namespace: r.Namespace,
@@ -85,7 +85,7 @@ func (r *RabbitMQAutoscaler) ValidateCreate() (admission.Warnings, error) {
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
 func (r *RabbitMQAutoscaler) ValidateUpdate(oldObj runtime.Object) (admission.Warnings, error) {
-	rabbitLog.Info("validate create", "name", r.Name)
+	rabbitLog.Info("validate update", "name", r.Name)
 	return nil, r.validate()
 }
 
@@ -97,7 +97,7 @@ func (r *RabbitMQAutoscaler) validate() error {
 	if r.Spec.DatabaseRef == nil {
 		return errors.New("databaseRef can't be empty")
 	}
-	var kf dbapi.RabbitMQ
+	var kf olddbapi.RabbitMQ
 	err := DefaultClient.Get(context.TODO(), types.NamespacedName{
 		Name:      r.Spec.DatabaseRef.Name,
 		Namespace: r.Namespace,

@@ -93,7 +93,7 @@ const (
 
 	KeyBlueprintName      = BackupBlueprintKey + "/name"
 	KeyBlueprintNamespace = BackupBlueprintKey + "/namespace"
-	KeyBlueprintSessions  = BackupBlueprintKey + "/sessions"
+	KeyBlueprintSessions  = BackupBlueprintKey + "/session-names"
 )
 
 // RBAC related
@@ -104,6 +104,7 @@ const (
 	KubeStashBackendJobClusterRole         = "kubestash-backend-job"
 	KubeStashStorageInitializerClusterRole = "kubestash-storage-initializer-job"
 	KubeStashPopulatorJobClusterRole       = "kubestash-populator-job"
+	KubeStashRetentionPolicyJobClusterRole = "kubestash-retention-policy-job"
 )
 
 // Reconciliation related

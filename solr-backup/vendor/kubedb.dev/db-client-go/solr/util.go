@@ -1,15 +1,30 @@
+/*
+Copyright AppsCode Inc. and Contributors
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 package solr
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 
 	"github.com/pkg/errors"
-
-	"fmt"
 )
 
-func (sc *SLClient) DecodeResponse(response *Response) (map[string]interface{}, error) {
+func (sc *Client) DecodeResponse(response *Response) (map[string]interface{}, error) {
 	defer func(Body io.ReadCloser) {
 		err := Body.Close()
 		if err != nil {
@@ -29,7 +44,7 @@ func (sc *SLClient) DecodeResponse(response *Response) (map[string]interface{}, 
 	return responseBody, nil
 }
 
-func (sc *SLClient) GetResponseStatus(responseBody map[string]interface{}) (int, error) {
+func (sc *Client) GetResponseStatus(responseBody map[string]interface{}) (int, error) {
 	err, ok := responseBody["error"].(map[string]interface{})
 	if ok {
 		msg, ok := err["msg"].(string)
@@ -65,10 +80,24 @@ func (sc *SLClient) GetResponseStatus(responseBody map[string]interface{}) (int,
 	return int(status), nil
 }
 
-func (sc *SLClient) DecodeCollectionHealth(responseBody map[string]interface{}) error {
+func (sc *Client) GetAsyncStatus(responseBody map[string]interface{}) (string, error) {
+	status, ok := responseBody["status"].(map[string]interface{})
+	if !ok {
+		return "unknown", errors.New("didn't find status")
+	}
+
+	state, ok := status["state"].(string)
+	if !ok {
+		return "unknown", errors.New("didn't find state")
+	}
+
+	return state, nil
+}
+
+func (sc *Client) DecodeCollectionHealth(responseBody map[string]interface{}) error {
 	clusterInfo, ok := responseBody["cluster"].(map[string]interface{})
 	if !ok {
-		return errors.New("didn't find cluster")
+		return errors.New(fmt.Sprintf("did not find cluster %v\n", responseBody))
 	}
 	collections, ok := clusterInfo["collections"].(map[string]interface{})
 	if !ok {
@@ -81,14 +110,15 @@ func (sc *SLClient) DecodeCollectionHealth(responseBody map[string]interface{}) 
 			return errors.New("didn't find health")
 		}
 		if health != "GREEN" {
-			sc.Config.log.Error(errors.New(""), fmt.Sprintf("Health of collection %s IS NOT GREEN", name))
+			config := sc.GetConfig()
+			config.log.Error(errors.New(""), fmt.Sprintf("Health of collection %s IS NOT GREEN", name))
 			return errors.New(fmt.Sprintf("health for collection %s is not green", name))
 		}
 	}
 	return nil
 }
 
-func (sc *SLClient) GetCollectionList(responseBody map[string]interface{}) ([]string, error) {
+func (sc *Client) GetCollectionList(responseBody map[string]interface{}) ([]string, error) {
 	collectionList, ok := responseBody["collections"].([]interface{})
 	if !ok {
 		return []string{}, errors.New("didn't find collection list")
@@ -102,9 +132,9 @@ func (sc *SLClient) GetCollectionList(responseBody map[string]interface{}) ([]st
 	return collections, nil
 }
 
-func (sc *SLClient) SearchCollection(collections []string) bool {
+func (sc *Client) SearchCollection(collections []string) bool {
 	for _, collection := range collections {
-		if collection == "kubedb-collection" {
+		if collection == "kubedb-system" {
 			return true
 		}
 	}

@@ -1,3 +1,19 @@
+/*
+Copyright AppsCode Inc. and Contributors
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 package solr
 
 import (
@@ -6,15 +22,12 @@ import (
 	"net/http"
 
 	"github.com/go-logr/logr"
-	"github.com/go-resty/resty/v2"
 	api "kubedb.dev/apimachinery/apis/kubedb/v1alpha2"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-type SLClient struct {
-	Client *resty.Client
-	log    logr.Logger
-	Config *Config
+type Client struct {
+	SLClient
 }
 
 type ClientOptions struct {
@@ -57,20 +70,24 @@ type QueryParams struct {
 	Limit int    `json:"limit,omitempty" yaml:"limit,omitempty"`
 }
 
-type BackupParams struct {
-	Location   string `json:"location,omitempty" yaml:"location,omitempty"`
-	Repository string `json:"repository,omitempty" yaml:"repository,omitempty"`
-}
-
-type RestoreParams struct {
-	Location   string `json:"location,omitempty" yaml:"location,omitempty"`
-	Repository string `json:"repository,omitempty" yaml:"repository,omitempty"`
-	Collection string `json:"collection,omitempty" yaml:"collection,omitempty"`
-}
-
 type CreateParams struct {
 	Name              string `json:"name,omitempty" yaml:"name,omitempty"`
 	Config            string `json:"config,omitempty" yaml:"config,omitempty"`
 	NumShards         int    `json:"numShards,omitempty" yaml:"numShards,omitempty"`
 	ReplicationFactor int    `json:"replicationFactor,omitempty" yaml:"replicationFactor,omitempty"`
+}
+
+type MoveReplicaInfo struct {
+	Replica    string `json:"replica,omitempty" yaml:"replica,omitempty"`
+	TargetNode string `json:"targetNode,omitempty" yaml:"targetNode,omitempty"`
+	Async      string `json:"async,omitempty" yaml:"async,omitempty"`
+}
+
+type MoveReplicaParams struct {
+	MoveReplica MoveReplicaInfo `json:"move-replica,omitempty" yaml:"move-replica,omitempty"`
+}
+
+type BalanceReplica struct {
+	WaitForFinalState bool   `json:"waitForFinalState,omitempty" yaml:"waitForFinalState,omitempty"`
+	Async             string `json:"async,omitempty" yaml:"async,omitempty"`
 }

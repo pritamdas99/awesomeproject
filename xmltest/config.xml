@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<solr>
+    <str name="sharedLib">${solr.sharedLib:}</str>
+    <solrCloud>
+        <str name="hostContext">${hostContext:solr}</str>
+        <int name="zkClientTimeout">${zkClientTimeout:30000}</int>
+        <int name="distribUpdateSoTimeout">${distribUpdateSoTimeout:500000}</int>
+    </solrCloud>
+    <int name="maxBooleanClauses">${solr.max.booleanClauses:2024}</int>
+    <shardHandlerFactory class="HttpShardHandlerFactory">
+        <lst name="replicaRouting">
+            <lst name="stable">
+                <bool name="default">true</bool>
+                <str name="dividend">routingDividend</str>
+                <str name="hash">q</str>
+            </lst>
+        </lst>
+    </shardHandlerFactory>
+    <metrics>
+        <hiddenSysProps>
+            <str>javax.net.ssl.keyStorePassword</str>
+            <str>javax.net.ssl.trustStorePassword</str>
+            <str>basicauth</str>
+            <str>zkDigestPassword</str>
+            <str>zkDigestReadonlyPassword</str>
+        </hiddenSysProps>
+    </metrics>
+    <caches>
+        <cache name="myNodeLevelUserCache"
+               class="solr.CaffeineCache"
+               size="4096"
+               initialSize="1024" />
+    </caches>
+    <logging></logging>
+</solr>
+<solrCloud>
+<str name="hostContext">${hostContext:solr}</str>
+<int name="zkClientTimeout">${zkClientTimeout:50000}</int>
+<int name="distribUpdateSoTimeout">${distribUpdateSoTimeout:700000}</int>
+</solrCloud>
+<backup>
+<repository name="kubedb-proxy-s3" class="org.apache.solr.s3.S3BackupRepository">
+    <str name="s3.bucket.name">solrbackup</str>
+    <str name="s3.region">us-east-1</str>
+    <str name="s3.endpoint">http://s3proxy-s3.demo.svc:80</str>
+</repository>
+</backup>
+<backup>
+<repository name="kubedb-proxy-s4" class="org.apache.solr.s3.S3BackupRepository">
+    <str name="s3.bucket.name">solrbackuppppp</str>
+    <str name="s3.region">us-east-1</str>
+    <str name="s3.endpoint">http://s3proxy-s3.demo.svc:80</str>
+</repository>
+</backup>

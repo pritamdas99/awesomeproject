@@ -1,18 +1,42 @@
+/*
+Copyright AppsCode Inc. and Contributors
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 package solr
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"errors"
 	"net"
 	"net/http"
 	"time"
 
+	"k8s.io/klog/v2"
+
+	"github.com/Masterminds/semver/v3"
+	gerr "github.com/pkg/errors"
+	core "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/types"
+	"kubedb.dev/apimachinery/apis/kubedb"
+
 	"fmt"
 
 	"github.com/go-logr/logr"
 	"github.com/go-resty/resty/v2"
-	core "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/types"
 	api "kubedb.dev/apimachinery/apis/kubedb/v1alpha2"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -53,7 +77,7 @@ func (o *KubeDBClientBuilder) WithContext(ctx context.Context) *KubeDBClientBuil
 	return o
 }
 
-func (o *KubeDBClientBuilder) GetSolrClient() (SLClient, error) {
+func (o *KubeDBClientBuilder) GetSolrClient() (*Client, error) {
 	if o.podName != "" {
 		o.url = o.GetHostPath(o.db)
 	}
@@ -61,51 +85,108 @@ func (o *KubeDBClientBuilder) GetSolrClient() (SLClient, error) {
 		o.url = o.GetHostPath(o.db)
 	}
 	if o.db == nil {
-		return SLClient{}, errors.New("db is empty")
+		return nil, errors.New("db is empty")
 	}
 	config := Config{
 		host: o.url,
 		transport: &http.Transport{
-			IdleConnTimeout: time.Second * 60,
+			IdleConnTimeout: time.Second * 10,
 			DialContext: (&net.Dialer{
-				Timeout:   time.Second * 60,
-				KeepAlive: time.Second * 60,
+				Timeout:   time.Second * 30,
+				KeepAlive: time.Second * 30,
 			}).DialContext,
-			TLSHandshakeTimeout:   60 * time.Second,
-			ResponseHeaderTimeout: 60 * time.Second,
-			ExpectContinueTimeout: 60 * time.Second,
+			TLSHandshakeTimeout:   time.Second * 20,
+			ResponseHeaderTimeout: time.Second * 20,
+			ExpectContinueTimeout: time.Second * 20,
 		},
 		connectionScheme: o.db.GetConnectionScheme(),
 		log:              o.log,
 	}
 
-	newClient := resty.New()
-	newClient.SetScheme(config.connectionScheme).SetBaseURL(config.host).SetTransport(config.transport)
-	newClient.SetHeader("Accept", "application/json")
-	newClient.SetTimeout(time.Second * 30)
-	newClient.SetDisableWarn(true)
+	// If EnableSSL is true set tls config,
+	// provide client certs and root CA
+	if o.db.Spec.EnableSSL {
+		var certSecret core.Secret
+		err := o.kc.Get(o.ctx, types.NamespacedName{
+			Namespace: o.db.Namespace,
+			Name:      o.db.GetCertSecretName(api.SolrClientCert),
+		}, &certSecret)
+		if err != nil {
+			klog.Error(err, "failed to get serverCert secret")
+			return nil, err
+		}
 
+		// get tls cert, clientCA and rootCA for tls config
+		// use server cert ca for rootca as issuer ref is not taken into account
+		clientCA := x509.NewCertPool()
+		rootCA := x509.NewCertPool()
+
+		crt, err := tls.X509KeyPair(certSecret.Data[core.TLSCertKey], certSecret.Data[core.TLSPrivateKeyKey])
+		if err != nil {
+			klog.Error(err, "failed to create certificate for TLS config")
+			return nil, err
+		}
+		clientCA.AppendCertsFromPEM(certSecret.Data["ca.crt"])
+		rootCA.AppendCertsFromPEM(certSecret.Data["ca.crt"])
+
+		config.transport.TLSClientConfig = &tls.Config{
+			Certificates: []tls.Certificate{crt},
+			ClientAuth:   tls.RequireAndVerifyClientCert,
+			ClientCAs:    clientCA,
+			RootCAs:      rootCA,
+			MaxVersion:   tls.VersionTLS13,
+		}
+	}
+
+	var authSecret core.Secret
 	if !o.db.Spec.DisableSecurity {
-		var authSecret core.Secret
 		err := o.kc.Get(o.ctx, types.NamespacedName{
 			Name:      o.db.Spec.AuthSecret.Name,
 			Namespace: o.db.Namespace,
 		}, &authSecret)
 		if err != nil {
 			config.log.Error(err, "failed to get auth secret to get solr client")
-			return SLClient{}, err
+			return nil, err
 		}
-		newClient.SetBasicAuth(string(authSecret.Data[core.BasicAuthUsernameKey]), string(authSecret.Data[core.BasicAuthPasswordKey]))
+	}
+	version, err := semver.NewVersion(o.db.Spec.Version)
+	if err != nil {
+		return nil, gerr.Wrap(err, "failed to parse version")
 	}
 
-	return SLClient{
-		Client: newClient,
-		log:    config.log,
-		Config: &config,
-	}, nil
+	switch {
+	case version.Major() >= 9:
+		newClient := resty.New()
+		newClient.SetScheme(config.connectionScheme).SetBaseURL(config.host).SetTransport(config.transport)
+		newClient.SetTimeout(time.Second * 30)
+		newClient.SetHeader("Accept", "application/json")
+		newClient.SetDisableWarn(true)
+		newClient.SetBasicAuth(string(authSecret.Data[core.BasicAuthUsernameKey]), string(authSecret.Data[core.BasicAuthPasswordKey]))
+		return &Client{
+			&SLClientV9{
+				Client: newClient,
+				Config: &config,
+			},
+		}, nil
+	case version.Major() == 8:
+		newClient := resty.New()
+		newClient.SetScheme(config.connectionScheme).SetBaseURL(config.host).SetTransport(config.transport)
+		newClient.SetTimeout(time.Second * 30)
+		newClient.SetHeader("Accept", "application/json")
+		newClient.SetDisableWarn(true)
+		newClient.SetBasicAuth(string(authSecret.Data[core.BasicAuthUsernameKey]), string(authSecret.Data[core.BasicAuthPasswordKey]))
+		return &Client{
+			&SLClientV8{
+				Client: newClient,
+				Config: &config,
+			},
+		}, nil
+	}
+
+	return nil, fmt.Errorf("unknown version: %s", o.db.Spec.Version)
 
 }
 
 func (o *KubeDBClientBuilder) GetHostPath(db *api.Solr) string {
-	return fmt.Sprintf("%v://%s.%s.svc.cluster.local:%d", db.GetConnectionScheme(), db.ServiceName(), db.GetNamespace(), api.SolrRestPort)
+	return fmt.Sprintf("%v://%s.%s.svc.cluster.local:%d", db.GetConnectionScheme(), db.ServiceName(), db.GetNamespace(), kubedb.SolrRestPort)
 }
