@@ -273,23 +273,35 @@ func run(lst []UpdateList, slClient *dbc.Client) {
 	wg.Wait()
 }
 
-func down(nodeList []string, x int, mp map[string][]CoreList) {
+func down(nodeList []string, x int, mp map[string][]CoreList, slClient *dbc.Client) {
 	n := len(nodeList)
 	ls2 := nodeList[n-x:]
 	ls1 := nodeList[:n-x]
+	fmt.Println("ls1 ", ls1)
+	fmt.Println("ls2 ", ls2)
 	ar := make([]UpdateList, 0)
 	for _, node := range ls2 {
 		for _, core := range mp[node] {
+			id := -1
+			mx := 1000000000
+			for j, l1 := range ls1 {
+				if len(mp[l1]) < mx {
+					mx = len(mp[l1])
+					id = j
+				}
+			}
 			ar = append(ar, UpdateList{
-				target:     ls1[0],
+				target:     ls1[id],
 				replica:    core.coreName,
 				collection: core.collection,
 			})
-			fmt.Println(core.coreName, core.collection, ls1[0])
+			mp[ls1[id]] = append(mp[ls1[id]], core)
+			fmt.Println(core.coreName, core.collection, ls1[id])
 		}
 	}
+	run(ar, slClient)
 }
-func up(nodeList []string, mp map[string][]CoreList) {
+func up(nodeList []string, mp map[string][]CoreList, slClient *dbc.Client) {
 	for _, x := range nodeList {
 		if _, ok := mp[x]; !ok {
 			mp[x] = make([]CoreList, 0)
@@ -328,6 +340,7 @@ func up(nodeList []string, mp map[string][]CoreList) {
 		})
 		fmt.Println(target, core, collection)
 	}
+	run(ar, slClient)
 }
 
 func main() {
@@ -403,8 +416,8 @@ func main() {
 			shardInfo := info.(map[string]interface{})
 			replicaInfo := shardInfo["replicas"].(map[string]interface{})
 			for core, info := range replicaInfo {
-				coreInfo := info.(map[string]string)
-				nodeName := coreInfo["node_name"]
+				coreInfo := info.(map[string]interface{})
+				nodeName := coreInfo["node_name"].(string)
 				if _, ok := mp[nodeName]; !ok {
 					mp[nodeName] = make([]CoreList, 0)
 				}
@@ -418,15 +431,30 @@ func main() {
 
 	nodeList := make([]string, 0)
 
-	liveNodes := responseBody["live_nodes"].([]string)
-
-	if db.Spec.Topology != nil {
-		r := *db.Spec.Topology.Data.Replicas
-		nodeList = liveNodes[:r]
+	liveNodes, ok := clusterInfo["live_nodes"]
+	if ok {
+		fmt.Println("got livenodes")
 	} else {
-		nodeList = liveNodes
+		fmt.Println("failed to get that")
+	}
+	xx := liveNodes.([]interface{})
+	for _, node := range xx {
+		x := node.(string)
+		nodeList = append(nodeList, x)
 	}
 	sort.Strings(nodeList)
+	fmt.Println(nodeList)
 
-	fmt.Println(responseBody)
+	//if db.Spec.Topology != nil {
+	//	r := *db.Spec.Topology.Data.Replicas
+	//	c := *db.Spec.Topology.Coordinator.Replicas
+	//	nodeList = nodeList[c : r+c]
+	//	fmt.Println("nodes ", r, nodeList)
+	//}
+
+	//fmt.Println(responseBody)
+
+	//balance(slClient)
+	//down(nodeList, 1, mp, slClient)
+	up(nodeList, mp, slClient)
 }

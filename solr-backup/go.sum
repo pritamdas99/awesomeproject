@@ -113,8 +113,8 @@ github.com/kisielk/errcheck v1.5.0/go.mod h1:pFxgyoBC7bSaBwPgfKdkLd5X25qrDl4LWUI
 github.com/kisielk/gotool v1.0.0/go.mod h1:XhKaO+MFFWcvkIS/tQcRk01m1F5IRFswLeQ+oQHNcck=
 github.com/klauspost/cpuid/v2 v2.0.9 h1:lgaqFMSdTdQYdZ04uHyN2d/eKdOMyi2YLSvlQIBFYa4=
 github.com/klauspost/cpuid/v2 v2.0.9/go.mod h1:FInQzS24/EEf25PyTYn52gqo7WaD8xa0213Md/qVLRg=
-github.com/kmodules/controller-runtime v0.16.3 h1:dWtbQujSaBGwkrFMM7z2/ZaBeCsPL5e6McXU1hjxDnw=
-github.com/kmodules/controller-runtime v0.16.3/go.mod h1:j7bialYoSn142nv9sCOJmQgDXQXxnroFU4VnX/brVJ0=
+github.com/kmodules/controller-runtime v0.18.4-0.20240603164526-fa88ec2314fe h1:6nl5dIci8FTzM2hxZ89ufxTXUYqLr9kSGEPPwX87ryk=
+github.com/kmodules/controller-runtime v0.18.4-0.20240603164526-fa88ec2314fe/go.mod h1:TVoGrfdpbA9VRFaRnKgk9P5/atA0pMwq+f+msb9M8Sg=
 github.com/kr/pretty v0.1.0/go.mod h1:dAy3ld7l9f0ibDNOQOHHMYYIIbhfbHSm3C4ZsoJORNo=
 github.com/kr/pretty v0.3.1 h1:flRD4NNwYAUpkphVc1HcthR4KEIFJ65n8Mw5qdRn3LE=
 github.com/kr/pretty v0.3.1/go.mod h1:hoEshYVHaxMs3cyo3Yncou5ZscifuDolrwPKZanG3xk=
@@ -388,8 +388,8 @@ kmodules.xyz/resource-metadata v0.18.12 h1:wHRYsvUXrX/620K0xXZlxnXJunZtHMuJbqDFZ
 kmodules.xyz/resource-metadata v0.18.12/go.mod h1:VvUjfIzmM08SZ9ssZKhduzSrggKjY93ES2Bk+/m04hs=
 kubedb.dev/apimachinery v0.47.1-0.20240911053140-5d153c926afa h1:w+CNe6lhG79TXTqaGwFBnHWrwV3+k4KEq7ISbxqDaKs=
 kubedb.dev/apimachinery v0.47.1-0.20240911053140-5d153c926afa/go.mod h1:dsSAmHt0j14fmKhtFZC4RlX4Aiytz/RVq3S0b30Mkug=
-kubedb.dev/db-client-go v0.2.1-0.20240917130124-fc2ddb3a3435 h1:Ts+dGKhKLL5Sz7mSJEvLJIYkFFoSK1eA0qBRIhGMq98=
-kubedb.dev/db-client-go v0.2.1-0.20240917130124-fc2ddb3a3435/go.mod h1:glhXxXhwMXiFVhhW3+KB6NTPqhlQacSJxcrRsnrcL20=
+kubedb.dev/db-client-go v0.2.1-0.20240919133922-e1d9b693a5d1 h1:ImcXiGHxBkB0v0J6XpQU+00wyKSoHMYtDPgmG+5XE3s=
+kubedb.dev/db-client-go v0.2.1-0.20240919133922-e1d9b693a5d1/go.mod h1:glhXxXhwMXiFVhhW3+KB6NTPqhlQacSJxcrRsnrcL20=
 kubeops.dev/petset v0.0.6 h1:0IbvxD9fadZfH+3iMZWzN6ZHsO0vX458JlioamwyPKQ=
 kubeops.dev/petset v0.0.6/go.mod h1:A15vh0r979NsvL65DTIZKWsa/NoX9VapHBAEw1ZsdYI=
 kubestash.dev/apimachinery v0.12.0 h1:33eDk/W2n/K45iRpAj8JTFGq9JzSvJBoWAjyoKTklgQ=

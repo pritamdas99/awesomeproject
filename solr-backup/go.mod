@@ -8,7 +8,7 @@ require (
 	k8s.io/klog/v2 v2.130.1
 	kmodules.xyz/client-go v0.30.13
 	kubedb.dev/apimachinery v0.47.1-0.20240911053140-5d153c926afa
-	kubedb.dev/db-client-go v0.2.1-0.20240917130124-fc2ddb3a3435
+	kubedb.dev/db-client-go v0.2.1-0.20240919133922-e1d9b693a5d1
 	sigs.k8s.io/controller-runtime v0.18.4
 )
 
@@ -116,4 +116,4 @@ require (
 	sigs.k8s.io/yaml v1.4.0 // indirect
 )
 
-replace sigs.k8s.io/controller-runtime => github.com/kmodules/controller-runtime v0.16.3
+replace sigs.k8s.io/controller-runtime => github.com/kmodules/controller-runtime v0.18.4-0.20240603164526-fa88ec2314fe

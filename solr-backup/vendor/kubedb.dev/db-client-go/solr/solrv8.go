@@ -346,16 +346,24 @@ func (sc *SLClientV8) DecodeBackupResponse(data map[string]interface{}, collecti
 func (sc *SLClientV8) MoveReplica(target string, replica string, collection string, async string) (*Response, error) {
 	sc.Config.log.V(5).Info(fmt.Sprintf("Move replica %v of collection %v to target node %v", replica, collection, target))
 	req := sc.Client.R().SetDoNotParseResponse(true)
-	req.SetHeader("Content-Type", "application/json")
-	moveReplica := &MoveReplicaParams{
-		MoveReplica: MoveReplicaInfo{
-			TargetNode: target,
-			Replica:    replica,
-			Async:      async,
-		},
+	params := map[string]string{
+		Action:     MoveReplica,
+		Collection: collection,
+		Replica:    replica,
+		TargetNode: target,
+		Async:      async,
 	}
-	req.SetBody(moveReplica)
-	res, err := req.Post(fmt.Sprintf("/api/c/%s", collection))
+	req.SetQueryParams(params)
+	//req.SetHeader("Content-Type", "application/json")
+	//moveReplica := &MoveReplicaParams{
+	//	MoveReplica: MoveReplicaInfo{
+	//		TargetNode: target,
+	//		Replica:    replica,
+	//		Async:      async,
+	//	},
+	//}
+	//req.SetBody(moveReplica)
+	res, err := req.Post("/solr/admin/collections")
 	if err != nil {
 		sc.Config.log.Error(err, "Failed to send http request to move replica")
 		return nil, err
