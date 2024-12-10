@@ -15,6 +15,7 @@ import (
 	core "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/util/homedir"
+	"k8s.io/klog/v2"
 	"kmodules.xyz/client-go/tools/clientcmd"
 	"kmodules.xyz/client-go/tools/portforward"
 	"log"
@@ -34,7 +35,7 @@ func init() {
 
 func main() {
 	ctx := context.TODO()
-	bucket, sess, err := connect(ctx)
+	_, sess, err := connect(ctx)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to connect to S3 bucket: %v\n", err)
 	}
@@ -50,17 +51,18 @@ func main() {
 	//	fmt.Println(obj.Key)
 	//
 	//}
-	defer func() {
-		_ = bucket.Close()
-	}()
+	//defer func() {
+	//	_ = bucket.Close()
+	//}()
 
 	//fmt.Println("-----------List done--------------")
-	//fmt.Println("connected..................", bucket, "\n\n", sess)
+	//fmt.Println("connected..................", bucket)
 
 	key := "/solr/bar.txt" // "/solr/pritam/car-backup1/"
-	_ = key
+	//_ = key
 	err = put(sess, key)
 	if err != nil {
+		fmt.Println("FATAL LOGE GERJEEJDJDD")
 		log.Fatal(err)
 	}
 	//err = List(sess, "/")
@@ -110,20 +112,21 @@ var (
 func connect(ctx context.Context) (*blob.Bucket, *session.Session, error) {
 	config, err := clientcmd.BuildConfigFromContext(kubeconfigPath, kubeContext)
 	kubeClient := kubernetes.NewForConfigOrDie(config)
-	fmt.Println(accessKeyID, secretAccessKey)
+	fmt.Println(accessKeyID, secretAccessKey, kubeClient)
 
 	tunnel := portforward.NewTunnel(portforward.TunnelOptions{
 		Client:    kubeClient.CoreV1().RESTClient(),
 		Config:    config,
 		Resource:  string(core.ResourceServices),
 		Namespace: "demo",
-		Name:      "s3proxy",
+		Name:      "s3proxy-s3",
 		Remote:    80,
 	})
 	if err := tunnel.ForwardPort(); err != nil {
 		return nil, nil, err
 	}
 	port := tunnel.Local
+	klog.Info(fmt.Sprintf("http://localhost:%v", port))
 	sess, err := session.NewSession(&aws.Config{
 		Region:   aws.String("us-east-1"),
 		Endpoint: aws.String(fmt.Sprintf("http://localhost:%v", port)),
@@ -132,10 +135,12 @@ func connect(ctx context.Context) (*blob.Bucket, *session.Session, error) {
 		Credentials:      credentials.NewStaticCredentials(accessKeyID, secretAccessKey, ""),
 	})
 	if err != nil {
+		fmt.Println(err)
 		return nil, nil, err
 	}
+	fmt.Println("WE HAVE GOT THE BUCKET", err)
 
-	bucket, err := s3blob.OpenBucket(ctx, sess, "appscode-testing", nil)
+	bucket, err := s3blob.OpenBucket(ctx, sess, "arnob-test123", nil)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -178,6 +183,7 @@ func read(ctx context.Context, bucket *blob.Bucket, key string) error {
 
 func put(sess *session.Session, key string) error {
 	svc := s3.New(sess)
+	fmt.Println("SOMETHING HERE 1")
 
 	// Define the POSIX metadata
 	metadata := map[string]*string{
@@ -207,11 +213,11 @@ func put(sess *session.Session, key string) error {
 	//	//	log.Fatal(err)
 	//	//}
 	//}
+	fmt.Println("WHAT THE HELL")
 
 	_, err := svc.PutObject(&s3.PutObjectInput{
-		Bucket: aws.String("appscode-testing"),
-		Key:    aws.String(key),
-
+		Bucket:   aws.String("arnob-test123"),
+		Key:      aws.String(key),
 		Body:     strings.NewReader("Hello, World!"),
 		Metadata: metadata,
 	})
@@ -226,7 +232,7 @@ func put(sess *session.Session, key string) error {
 func check(sess *session.Session, key string) error {
 	svc := s3.New(sess)
 	headObjectOutput, err := svc.HeadObject(&s3.HeadObjectInput{
-		Bucket: aws.String("appscode-testing"),
+		Bucket: aws.String("arnob-test123"),
 		Key:    aws.String(key),
 	})
 	if err != nil {
@@ -240,8 +246,8 @@ func check(sess *session.Session, key string) error {
 	}
 
 	headObjectOutput, err = svc.HeadObject(&s3.HeadObjectInput{
-		Bucket: aws.String("appscode-testing"),
-		Key:    aws.String("/solr/foo.txt"),
+		Bucket: aws.String("arnob-test123"),
+		Key:    aws.String(key),
 	})
 	if err != nil {
 		return err
