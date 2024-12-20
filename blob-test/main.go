@@ -112,7 +112,7 @@ var (
 func connect(ctx context.Context) (*blob.Bucket, *session.Session, error) {
 	config, err := clientcmd.BuildConfigFromContext(kubeconfigPath, kubeContext)
 	kubeClient := kubernetes.NewForConfigOrDie(config)
-	fmt.Println(accessKeyID, secretAccessKey, kubeClient)
+	fmt.Println(accessKeyID, secretAccessKey)
 
 	tunnel := portforward.NewTunnel(portforward.TunnelOptions{
 		Client:    kubeClient.CoreV1().RESTClient(),
@@ -143,6 +143,8 @@ func connect(ctx context.Context) (*blob.Bucket, *session.Session, error) {
 	bucket, err := s3blob.OpenBucket(ctx, sess, "arnob-test123", nil)
 	if err != nil {
 		return nil, nil, err
+	} else {
+		fmt.Println("WHADHDUNKXD********************************")
 	}
 	return bucket, sess, nil
 }
