@@ -128,7 +128,7 @@ func connect(ctx context.Context) (*blob.Bucket, *session.Session, error) {
 	port := tunnel.Local
 	klog.Info(fmt.Sprintf("http://localhost:%v", port))
 	sess, err := session.NewSession(&aws.Config{
-		Region:   aws.String("us-east-1"),
+		Region:   aws.String("us-east-2"),
 		Endpoint: aws.String(fmt.Sprintf("http://localhost:%v", port)),
 		//Endpoint:    aws.String("https://us-east-1.linodeobjects.com"),
 		S3ForcePathStyle: pointer.BoolP(true),
@@ -224,6 +224,7 @@ func put(sess *session.Session, key string) error {
 		Metadata: metadata,
 	})
 	if err != nil {
+		fmt.Println(err)
 		log.Fatal(err)
 	}
 
