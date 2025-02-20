@@ -1,7 +1,7 @@
 #!/bin/bash
 
-#set -eo pipefail
-#set -x
+set -eo pipefail
+set -x
 
 TEMP_CONFIG_DIR=/data/temp
 CUSTOM_CONFIG_DIR=/data/custom
@@ -67,13 +67,15 @@ for FILE_DIR in "$CONFIG_DIR"/*; do
   if [[ "$EXTENSION" == "yaml" ]]; then
     # merge user provided custom config with the updated one
     if [ -f $CUSTOM_CONFIG_DIR/"$FILE_NAME" ]; then
-        NETWORK="network"
+        NETWORK="hazelcast.network"
         ADVANCED_NETWORK="advanced-network"
-        if yq e "has(\"$NETWORK\")" "$FILE_DIR" | grep -q "true" && yq e "has(\"$ADVANCED_NETWORK\")" "$CUSTOM_CONFIG_DIR"/$FILE_NAME | grep -q "true"; then
-           yq -i "del(.$NETWORK)" "$FILEDIR"
-           echo "Key '$NETWORK' deleted from '$FILE_DIR' successfully."
-        fi
-        yq merge -i --overwrite "$FILE_DIR" $CUSTOM_CONFIG_DIR/"$FILE_NAME"
+#        if yq e "has(\"$NETWORK\")" "$FILE_DIR" | grep -q "true" && yq e "has(\"$ADVANCED_NETWORK\")" "$CUSTOM_CONFIG_DIR"/$FILE_NAME | grep -q "true"; then
+         yq delete -i "$FILE_DIR" "$NETWORK"
+         echo "Key '$NETWORK' deleted from '$FILE_DIR' successfully.^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
+         cat "$FILE_DIR"
+         echo "done with config^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
+#        fi
+        yq merge -i --overwrite "$FILE_DIR" "$CUSTOM_CONFIG_DIR"/"$FILE_NAME"
     fi
   fi
 done

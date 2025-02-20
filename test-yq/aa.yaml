@@ -1,0 +1,21 @@
+hazelcast:
+  map:
+    default:
+      data-persistence:
+        enabled: true
+  security:
+    enabled: true
+    realms:
+      - name: simpleRealm
+        authentication:
+          simple:
+            users:
+              - username: user
+                password: password
+                roles:
+                  - root
+    client-authentication:
+      realm: simpleRealm
+    client-permissions:
+      all:
+        principal: root

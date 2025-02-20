@@ -17,11 +17,11 @@ RUN apk add --no-cache bash
 
 COPY scripts/config-merger.sh /usr/local/bin/config-merger.sh
 COPY --from=yq /yq /usr/bin/yq
-RUN ["mkdir","-p","/data"]
+#RUN ["mkdir","-p","/data"]
 
 RUN chmod -c 755 /usr/local/bin/config-merger.sh
-RUN chown -R 65534:65534 /data
+#RUN chown -R 65534:65534 /data
 
-USER 65534
+#USER 65534
 
 ENTRYPOINT ["/bin/bash","/usr/local/bin/config-merger.sh"]
