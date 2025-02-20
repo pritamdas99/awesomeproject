@@ -2,13 +2,10 @@ package main
 
 import (
 	"context"
-	"encoding/base64"
-	"encoding/json"
 	"fmt"
 	"github.com/hazelcast/hazelcast-go-client"
 	"github.com/hazelcast/hazelcast-go-client/types"
 	"log"
-	"net/http"
 	"time"
 )
 
@@ -90,16 +87,18 @@ func main() {
 	// create the default configuration
 	config := hazelcast.Config{}
 	// optionally set member addresses manually
-	config.Cluster.Network.SetAddresses("hazelcast-hazelcast-enterprise:5701")
+	config.Cluster.Network.SetAddresses("hazelcast-sample.default.svc:5701")
 	config.Cluster.Network.ConnectionTimeout = types.Duration(time.Second * 10)
-	config.Cluster.Security.Credentials.Password = "password"
-	config.Cluster.Security.Credentials.Username = "user"
+	config.Cluster.Security.Credentials.Password = "T(HRkNPSFP0~1IT3"
+	config.Cluster.Security.Credentials.Username = "admin"
 	// create and start the client with the configuration provider
 	client, err := hazelcast.StartNewClientWithConfig(ctx, config)
 	// handle client start error
 
 	if err != nil {
 		log.Fatal(err)
+	} else {
+		fmt.Println("git the client")
 	}
 	// get a map
 	people, err := client.GetMap(ctx, "people")
@@ -112,45 +111,48 @@ func main() {
 		log.Fatal(err)
 	}
 	// get a value from the map
-	age, err := people.Get(ctx, personName)
+	age, err := people.Get(ctx, "whatever")
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%s is %d years old.\n", personName, age)
-	client.Shutdown(ctx)
-
-	url := "http://hazelcast-hazelcast-enterprise.default.svc:5701/hazelcast/health"
-
-	// Create the data to send in the request
-
-	// Create a new HTTP POST request
-	req, err := http.NewRequest("GET", url, nil)
+	fmt.Printf("%v is %v years old.\n", personName, age)
+	err = client.Shutdown(ctx)
 	if err != nil {
-		fmt.Println("Error creating request:", err)
-		return
+		log.Fatal(err)
 	}
 
-	// Set headers
-	auth := "user:passowrd"
-	encodedAuth := base64.StdEncoding.EncodeToString([]byte(auth))
-	req.Header.Add("Authorization", "Basic "+encodedAuth)
-
-	// Send the request
-	cli := &http.Client{}
-	resp, err := cli.Do(req)
-	if err != nil {
-		fmt.Println("Error sending request:", err)
-		return
-	}
-	var result map[string]interface{}
-	err = json.NewDecoder(resp.Body).Decode(&result)
-	if err != nil {
-		fmt.Println("Error decoding response body:", err)
-		return
-	}
-
-	// Print the result as a map
-	fmt.Println("Response as Map:", result)
-	defer resp.Body.Close()
+	//url := "http://hazelcast-hazelcast-enterprise.default.svc:5701/hazelcast/health"
+	//
+	//// Create the data to send in the request
+	//
+	//// Create a new HTTP POST request
+	//req, err := http.NewRequest("GET", url, nil)
+	//if err != nil {
+	//	fmt.Println("Error creating request:", err)
+	//	return
+	//}
+	//
+	//// Set headers
+	//auth := "user:passowrd"
+	//encodedAuth := base64.StdEncoding.EncodeToString([]byte(auth))
+	//req.Header.Add("Authorization", "Basic "+encodedAuth)
+	//
+	//// Send the request
+	//cli := &http.Client{}
+	//resp, err := cli.Do(req)
+	//if err != nil {
+	//	fmt.Println("Error sending request:", err)
+	//	return
+	//}
+	//var result map[string]interface{}
+	//err = json.NewDecoder(resp.Body).Decode(&result)
+	//if err != nil {
+	//	fmt.Println("Error decoding response body:", err)
+	//	return
+	//}
+	//
+	//// Print the result as a map
+	//fmt.Println("Response as Map:", result)
+	//defer resp.Body.Close()
 	// stop the client to release resources
 }

@@ -73,11 +73,6 @@ func main() {
 
 	fmt.Println("got my client", esClient)
 
-	//response, err := slClient.BackupCollection(context.TODO(), "book", "book-backup", "s3:/hello", "kubedb-linode-s3")
-	//if err != nil {
-	//	klog.Error(err)
-	//}
-
 	response, err := esClient.ShardStats()
 	if err != nil {
 		klog.Error(err)
