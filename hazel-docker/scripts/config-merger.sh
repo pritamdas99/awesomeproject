@@ -69,12 +69,12 @@ for FILE_DIR in "$CONFIG_DIR"/*; do
     if [ -f $CUSTOM_CONFIG_DIR/"$FILE_NAME" ]; then
         NETWORK="hazelcast.network"
         ADVANCED_NETWORK="advanced-network"
-#        if yq e "has(\"$NETWORK\")" "$FILE_DIR" | grep -q "true" && yq e "has(\"$ADVANCED_NETWORK\")" "$CUSTOM_CONFIG_DIR"/$FILE_NAME | grep -q "true"; then
-         yq delete -i "$FILE_DIR" "$NETWORK"
-         echo "Key '$NETWORK' deleted from '$FILE_DIR' successfully.^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
-         cat "$FILE_DIR"
-         echo "done with config^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
-#        fi
+        if yq r "$FILE_DIR" hazelcast.network | grep -q "true" && yq r "$CUSTOM_CONFIG_DIR"/$FILE_NAME  hazelcast.advanced-network | grep -q "true"; then
+           yq delete -i "$FILE_DIR" "$NETWORK"
+           echo "Key '$NETWORK' deleted from '$FILE_DIR' successfully.^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
+           cat "$FILE_DIR"
+           echo "done with config^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
+        fi
         yq merge -i --overwrite "$FILE_DIR" "$CUSTOM_CONFIG_DIR"/"$FILE_NAME"
     fi
   fi
