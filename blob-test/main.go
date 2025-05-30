@@ -58,7 +58,7 @@ func main() {
 	//fmt.Println("-----------List done--------------")
 	//fmt.Println("connected..................", bucket)
 
-	key := "/solr/bar.txt" // "/solr/pritam/car-backup1/"
+	key := "/solrd" // "/solr/pritam/car-backup1/"
 	//_ = key
 	err = put(sess, key)
 	if err != nil {
@@ -119,7 +119,7 @@ func connect(ctx context.Context) (*blob.Bucket, *session.Session, error) {
 		Config:    config,
 		Resource:  string(core.ResourceServices),
 		Namespace: "demo",
-		Name:      "s3proxy-s3",
+		Name:      "proxy-svc",
 		Remote:    80,
 	})
 	if err := tunnel.ForwardPort(); err != nil {
@@ -140,11 +140,11 @@ func connect(ctx context.Context) (*blob.Bucket, *session.Session, error) {
 	}
 	fmt.Println("WE HAVE GOT THE BUCKET", err)
 
-	bucket, err := s3blob.OpenBucket(ctx, sess, "arnob-test123", nil)
+	bucket, err := s3blob.OpenBucket(ctx, sess, "kubestash", nil)
 	if err != nil {
 		return nil, nil, err
 	} else {
-		fmt.Println("WHADHDUNKXD********************************")
+		fmt.Println("WHADHDUNKXD********************************", err, bucket, sess)
 	}
 	return bucket, sess, nil
 }
@@ -218,12 +218,13 @@ func put(sess *session.Session, key string) error {
 	fmt.Println("WHAT THE HELL")
 
 	_, err := svc.PutObject(&s3.PutObjectInput{
-		Bucket:   aws.String("arnob-test123"),
+		Bucket:   aws.String("kubestash"),
 		Key:      aws.String(key),
-		Body:     strings.NewReader("Hello, World!"),
+		Body:     strings.NewReader(""),
 		Metadata: metadata,
 	})
 	if err != nil {
+		klog.Error(err, "what the fuck man")
 		log.Fatal(err)
 	}
 
@@ -234,7 +235,7 @@ func put(sess *session.Session, key string) error {
 func check(sess *session.Session, key string) error {
 	svc := s3.New(sess)
 	headObjectOutput, err := svc.HeadObject(&s3.HeadObjectInput{
-		Bucket: aws.String("arnob-test123"),
+		Bucket: aws.String("kubestash"),
 		Key:    aws.String(key),
 	})
 	if err != nil {
@@ -248,7 +249,7 @@ func check(sess *session.Session, key string) error {
 	}
 
 	headObjectOutput, err = svc.HeadObject(&s3.HeadObjectInput{
-		Bucket: aws.String("arnob-test123"),
+		Bucket: aws.String("kubestash"),
 		Key:    aws.String(key),
 	})
 	if err != nil {

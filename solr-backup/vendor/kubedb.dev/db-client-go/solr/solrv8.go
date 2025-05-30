@@ -380,3 +380,94 @@ func (sc *SLClientV8) MoveReplica(target string, replica string, collection stri
 func (sc *SLClientV8) BalanceReplica(async string) (*Response, error) {
 	return nil, nil
 }
+
+func (sc *SLClientV8) AddRole(role, node string) (*Response, error) {
+	sc.Config.log.V(5).Info(fmt.Sprintf("Add role %s in node %s", role, node))
+	req := sc.Client.R().SetDoNotParseResponse(true)
+	req.SetHeader("Content-Type", "application/json")
+	params := map[string]string{
+		Action: AddRole,
+		Node:   node,
+		Role:   role,
+	}
+	req.SetQueryParams(params)
+
+	res, err := req.Get("/solr/admin/collections")
+	if err != nil {
+		sc.Config.log.Error(err, "Failed to send http request to add a role")
+		return nil, err
+	}
+
+	backupResponse := &Response{
+		Code:   res.StatusCode(),
+		header: res.Header(),
+		body:   res.RawBody(),
+	}
+	return backupResponse, nil
+}
+
+func (sc *SLClientV8) RemoveRole(role, node string) (*Response, error) {
+	sc.Config.log.V(5).Info(fmt.Sprintf("Remove role %s in node %s", role, node))
+	req := sc.Client.R().SetDoNotParseResponse(true)
+	req.SetHeader("Content-Type", "application/json")
+	params := map[string]string{
+		Action: RemoveRole,
+		Node:   node,
+		Role:   role,
+	}
+	req.SetQueryParams(params)
+
+	res, err := req.Get("/solr/admin/collections")
+	if err != nil {
+		sc.Config.log.Error(err, "Failed to send http request to remove a role")
+		return nil, err
+	}
+
+	backupResponse := &Response{
+		Code:   res.StatusCode(),
+		header: res.Header(),
+		body:   res.RawBody(),
+	}
+	return backupResponse, nil
+}
+
+func (sc *SLClientV8) DeleteCollection(name string) (*Response, error) {
+	sc.Config.log.V(5).Info(fmt.Sprintf("Delete COLLECTION: %s", name))
+	req := sc.Client.R().SetDoNotParseResponse(true)
+	req.SetHeader("Content-Type", "application/json")
+	deleteParams := map[string]string{
+		Action: ActionDelete,
+		Name:   name,
+	}
+	req.SetQueryParams(deleteParams)
+	res, err := req.Delete("/solr/admin/collections")
+	if err != nil {
+		sc.Config.log.Error(err, "Failed to send http request to read a collection")
+		return nil, err
+	}
+
+	deleteResponse := &Response{
+		Code:   res.StatusCode(),
+		header: res.Header(),
+		body:   res.RawBody(),
+	}
+	return deleteResponse, nil
+}
+
+func (sc *SLClientV8) GetMetrics() (*Response, error) {
+	sc.Config.log.V(5).Info("GET METRICS")
+	req := sc.Client.R().SetDoNotParseResponse(true)
+	req.SetHeader("Content-Type", "application/json")
+	res, err := req.Get("/solr/admin/metrics")
+	if err != nil {
+		sc.Config.log.Error(err, "Failed to send http request to get metrics")
+		return nil, err
+	}
+
+	writeResponse := &Response{
+		Code:   res.StatusCode(),
+		header: res.Header(),
+		body:   res.RawBody(),
+	}
+	return writeResponse, nil
+}

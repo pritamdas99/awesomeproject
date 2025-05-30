@@ -48,6 +48,16 @@ spec:
                 - IfReady
                 - Always
                 type: string
+              authentication:
+                properties:
+                  secretRef:
+                    properties:
+                      name:
+                        default: ""
+                        type: string
+                    type: object
+                    x-kubernetes-map-type: atomic
+                type: object
               configuration:
                 properties:
                   applyConfig:
@@ -71,6 +81,21 @@ spec:
                     type: string
                 type: object
                 x-kubernetes-map-type: atomic
+              horizontalScaling:
+                properties:
+                  coordinator:
+                    format: int32
+                    type: integer
+                  data:
+                    format: int32
+                    type: integer
+                  node:
+                    format: int32
+                    type: integer
+                  overseer:
+                    format: int32
+                    type: integer
+                type: object
               restart:
                 type: object
               timeout:
@@ -183,11 +208,13 @@ spec:
               type:
                 enum:
                 - UpdateVersion
+                - HorizontalScaling
                 - VerticalScaling
                 - VolumeExpansion
                 - Reconfigure
                 - Restart
                 - ReconfigureTLS
+                - RotateAuth
                 type: string
               updateVersion:
                 properties:
@@ -206,6 +233,8 @@ spec:
                             items:
                               properties:
                                 name:
+                                  type: string
+                                request:
                                   type: string
                               required:
                               - name
@@ -253,6 +282,8 @@ spec:
                               properties:
                                 name:
                                   type: string
+                                request:
+                                  type: string
                               required:
                               - name
                               type: object
@@ -299,6 +330,8 @@ spec:
                               properties:
                                 name:
                                   type: string
+                                request:
+                                  type: string
                               required:
                               - name
                               type: object
@@ -344,6 +377,8 @@ spec:
                             items:
                               properties:
                                 name:
+                                  type: string
+                                request:
                                   type: string
                               required:
                               - name

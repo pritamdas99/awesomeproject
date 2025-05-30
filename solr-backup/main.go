@@ -6,9 +6,9 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	api "kubedb.dev/apimachinery/apis/kubedb/v1alpha2"
 	dbc "kubedb.dev/db-client-go/solr"
+	"log"
 	"os"
 	"path/filepath"
-	"sort"
 	"sync"
 	"time"
 
@@ -359,7 +359,7 @@ func main() {
 	fmt.Println("got kb client", kc)
 	db := &api.Solr{}
 	err = kc.Get(context.TODO(), types.NamespacedName{
-		Name:      "solr-cluster",
+		Name:      "solr-combined",
 		Namespace: "demo",
 	}, db)
 	if err != nil {
@@ -379,7 +379,7 @@ func main() {
 	//	klog.Error(err)
 	//}
 
-	response, err := slClient.GetClusterStatus()
+	response, err := slClient.GetMetrics()
 	if err != nil {
 		klog.Error(err)
 	}
@@ -400,61 +400,74 @@ func main() {
 		fmt.Println("***************************************status is 0")
 	}
 
-	clusterInfo, ok := responseBody["cluster"].(map[string]interface{})
-	if !ok {
-		klog.Error(fmt.Errorf("did not find cluster %v\n", responseBody))
-	}
-	collections, ok := clusterInfo["collections"].(map[string]interface{})
-	if !ok {
-		klog.Error("didn't find collections")
-	}
-	mp := make(map[string][]CoreList)
-	for collection, info := range collections {
-		collectionInfo := info.(map[string]interface{})
-		shardInfo := collectionInfo["shards"].(map[string]interface{})
-		for _, info := range shardInfo {
-			shardInfo := info.(map[string]interface{})
-			replicaInfo := shardInfo["replicas"].(map[string]interface{})
-			for core, info := range replicaInfo {
-				coreInfo := info.(map[string]interface{})
-				nodeName := coreInfo["node_name"].(string)
-				if _, ok := mp[nodeName]; !ok {
-					mp[nodeName] = make([]CoreList, 0)
-				}
-				mp[nodeName] = append(mp[nodeName], CoreList{
-					coreName:   core,
-					collection: collection,
-				})
-			}
-		}
-	}
+	me, err := slClient.RetrieveMetrics(responseBody)
+	if err != nil {
+		log.Fatal(err)
 
-	nodeList := make([]string, 0)
-
-	liveNodes, ok := clusterInfo["live_nodes"]
-	if ok {
-		fmt.Println("got livenodes")
-	} else {
-		fmt.Println("failed to get that")
 	}
-	xx := liveNodes.([]interface{})
-	for _, node := range xx {
-		x := node.(string)
-		nodeList = append(nodeList, x)
-	}
-	sort.Strings(nodeList)
-	fmt.Println(nodeList)
+	fmt.Println(me)
+	fmt.Println(me.JVM.ThreadsCount, me.JVM.ThreadsPeakCount, me.JVM.ThreadsRunnableCount)
+	fmt.Println(me.JVM.MemoryHeapMax, me.JVM.MemoryHeapUsed, me.JVM.MemoryHeapUsage)
+	fmt.Println(me.JVM.BuffersMappedCount, me.JVM.BuffersMappedMemoryUsed, me.JVM.BuffersMappedTotalCapacity)
+	fmt.Println(me.JVM.BuffersDirectCount, me.JVM.BuffersDirectMemoryUsed, me.JVM.BuffersDirectTotalCapacity)
+	fmt.Println(me.Jetty.Jobs, me.Jetty.Size, me.Jetty.Utilization)
+	return
 
-	//if db.Spec.Topology != nil {
-	//	r := *db.Spec.Topology.Data.Replicas
-	//	c := *db.Spec.Topology.Coordinator.Replicas
-	//	nodeList = nodeList[c : r+c]
-	//	fmt.Println("nodes ", r, nodeList)
+	//clusterInfo, ok := responseBody["cluster"].(map[string]interface{})
+	//if !ok {
+	//	klog.Error(fmt.Errorf("did not find cluster %v\n", responseBody))
 	//}
-
-	//fmt.Println(responseBody)
-
-	//balance(slClient)
-	//down(nodeList, 1, mp, slClient)
-	up(nodeList, mp, slClient)
+	//collections, ok := clusterInfo["collections"].(map[string]interface{})
+	//if !ok {
+	//	klog.Error("didn't find collections")
+	//}
+	//mp := make(map[string][]CoreList)
+	//for collection, info := range collections {
+	//	collectionInfo := info.(map[string]interface{})
+	//	shardInfo := collectionInfo["shards"].(map[string]interface{})
+	//	for _, info := range shardInfo {
+	//		shardInfo := info.(map[string]interface{})
+	//		replicaInfo := shardInfo["replicas"].(map[string]interface{})
+	//		for core, info := range replicaInfo {
+	//			coreInfo := info.(map[string]interface{})
+	//			nodeName := coreInfo["node_name"].(string)
+	//			if _, ok := mp[nodeName]; !ok {
+	//				mp[nodeName] = make([]CoreList, 0)
+	//			}
+	//			mp[nodeName] = append(mp[nodeName], CoreList{
+	//				coreName:   core,
+	//				collection: collection,
+	//			})
+	//		}
+	//	}
+	//}
+	//
+	//nodeList := make([]string, 0)
+	//
+	//liveNodes, ok := clusterInfo["live_nodes"]
+	//if ok {
+	//	fmt.Println("got livenodes")
+	//} else {
+	//	fmt.Println("failed to get that")
+	//}
+	//xx := liveNodes.([]interface{})
+	//for _, node := range xx {
+	//	x := node.(string)
+	//	nodeList = append(nodeList, x)
+	//}
+	//sort.Strings(nodeList)
+	//fmt.Println(nodeList)
+	//
+	////if db.Spec.Topology != nil {
+	////	r := *db.Spec.Topology.Data.Replicas
+	////	c := *db.Spec.Topology.Coordinator.Replicas
+	////	nodeList = nodeList[c : r+c]
+	////	fmt.Println("nodes ", r, nodeList)
+	////}
+	//
+	////fmt.Println(responseBody)
+	//
+	////balance(slClient)
+	////down(nodeList, 1, mp, slClient)
+	//up(nodeList, mp, slClient)
 }

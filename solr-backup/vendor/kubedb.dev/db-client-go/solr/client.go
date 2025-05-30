@@ -91,3 +91,47 @@ type BalanceReplica struct {
 	WaitForFinalState bool   `json:"waitForFinalState,omitempty" yaml:"waitForFinalState,omitempty"`
 	Async             string `json:"async,omitempty" yaml:"async,omitempty"`
 }
+
+type CoreList struct {
+	coreName   string
+	collection string
+}
+
+type UpdateList struct {
+	target     string
+	replica    string
+	collection string
+}
+
+type MetricsInfo struct {
+	Metrics Metrics `json:"metrics,omitempty" yaml:"metrics,omitempty"`
+}
+
+type Metrics struct {
+	Jetty Jetty `json:"jetty,omitempty" yaml:"jetty,omitempty"`
+	JVM   JVM   `json:"jvm,omitempty" yaml:"jvm,omitempty"`
+}
+
+type Jetty struct {
+	Jobs        any
+	Size        any
+	Utilization any
+}
+
+type JVM struct {
+	BuffersDirectCount         float64 `json:"buffers.direct.count,omitempty" yaml:"buffers.direct.count,omitempty"`
+	BuffersDirectMemoryUsed    float64 `json:"buffers.direct.MemoryUsed,omitempty" yaml:"buffers.direct.MemoryUsed,omitempty"`
+	BuffersDirectTotalCapacity float64 `json:"buffers.direct.TotalCapacity,omitempty" yaml:"buffers.direct.TotalCapacity,omitempty"`
+
+	BuffersMappedCount         float64 `json:"buffers.mapped.count,omitempty" yaml:"buffers.mapped.count,omitempty"`
+	BuffersMappedMemoryUsed    float64 `json:"buffers.mapped.MemoryUsed,omitempty" yaml:"buffers.mapped.MemoryUsed,omitempty"`
+	BuffersMappedTotalCapacity float64 `json:"buffers.mapped.TotalCapacity,omitempty" yaml:"buffers.mapped.TotalCapacity,omitempty"`
+
+	MemoryHeapMax   float64
+	MemoryHeapUsed  float64
+	MemoryHeapUsage float64
+
+	ThreadsCount         float64
+	ThreadsPeakCount     float64
+	ThreadsRunnableCount float64
+}

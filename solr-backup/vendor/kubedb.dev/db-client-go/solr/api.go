@@ -28,9 +28,14 @@ const (
 	Action              = "action"
 	ActionBackup        = "BACKUP"
 	ActionRestore       = "RESTORE"
+	ActionDelete        = "DELETE"
 	ActionCreate        = "CREATE"
 	ActionDeleteBackup  = "DELETEBACKUP"
+	AddRole             = "ADDROLE"
+	RemoveRole          = "REMOVEROLE"
 	Name                = "name"
+	Role                = "role"
+	Node                = "node"
 	Location            = "location"
 	Repository          = "repository"
 	Collection          = "collection"
@@ -65,4 +70,8 @@ type SLClient interface {
 	DecodeBackupResponse(data map[string]interface{}, collection string) ([]byte, error)
 	MoveReplica(target string, replica string, collection string, async string) (*Response, error)
 	BalanceReplica(async string) (*Response, error)
+	AddRole(role, node string) (*Response, error)
+	RemoveRole(role, node string) (*Response, error)
+	DeleteCollection(name string) (*Response, error)
+	GetMetrics() (*Response, error)
 }

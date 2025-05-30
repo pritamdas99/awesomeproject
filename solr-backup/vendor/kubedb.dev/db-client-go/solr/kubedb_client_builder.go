@@ -79,7 +79,7 @@ func (o *KubeDBClientBuilder) WithContext(ctx context.Context) *KubeDBClientBuil
 
 func (o *KubeDBClientBuilder) GetSolrClient() (*Client, error) {
 	if o.podName != "" {
-		o.url = o.GetHostPath(o.db)
+		o.url = fmt.Sprintf("%v://%s.%s.%s.svc.cluster.local:%d", o.db.GetConnectionScheme(), o.podName, o.db.GoverningServiceName(), o.db.GetNamespace(), kubedb.SolrRestPort)
 	}
 	if o.url == "" {
 		o.url = o.GetHostPath(o.db)
@@ -126,8 +126,8 @@ func (o *KubeDBClientBuilder) GetSolrClient() (*Client, error) {
 			klog.Error(err, "failed to create certificate for TLS config")
 			return nil, err
 		}
-		clientCA.AppendCertsFromPEM(certSecret.Data["ca.crt"])
-		rootCA.AppendCertsFromPEM(certSecret.Data["ca.crt"])
+		clientCA.AppendCertsFromPEM(certSecret.Data[kubedb.CACert])
+		rootCA.AppendCertsFromPEM(certSecret.Data[kubedb.CACert])
 
 		config.transport.TLSClientConfig = &tls.Config{
 			Certificates: []tls.Certificate{crt},
@@ -141,7 +141,7 @@ func (o *KubeDBClientBuilder) GetSolrClient() (*Client, error) {
 	var authSecret core.Secret
 	if !o.db.Spec.DisableSecurity {
 		err := o.kc.Get(o.ctx, types.NamespacedName{
-			Name:      o.db.Spec.AuthSecret.Name,
+			Name:      o.db.GetAuthSecretName(),
 			Namespace: o.db.Namespace,
 		}, &authSecret)
 		if err != nil {

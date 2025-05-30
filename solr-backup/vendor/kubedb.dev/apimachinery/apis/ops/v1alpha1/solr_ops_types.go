@@ -49,8 +49,8 @@ type SolrOpsRequest struct {
 	Status            OpsRequestStatus   `json:"status,omitempty"`
 }
 
-// +kubebuilder:validation:Enum=UpdateVersion;VerticalScaling;VolumeExpansion;Reconfigure;Restart;ReconfigureTLS
-// ENUM(UpdateVersion, VerticalScaling, VolumeExpansion, Reconfigure, Restart, ReconfigureTLS)
+// +kubebuilder:validation:Enum=UpdateVersion;HorizontalScaling;VerticalScaling;VolumeExpansion;Reconfigure;Restart;ReconfigureTLS;RotateAuth
+// ENUM(UpdateVersion, HorizontalScaling, VerticalScaling, VolumeExpansion, Reconfigure, Restart, ReconfigureTLS, RotateAuth)
 type SolrOpsRequestType string
 
 // SolrOpsRequestSpec is the spec for SolrOpsRequest
@@ -61,6 +61,8 @@ type SolrOpsRequestSpec struct {
 	Type SolrOpsRequestType `json:"type"`
 	// Specifies information necessary for upgrading Solr
 	UpdateVersion *SolrUpdateVersionSpec `json:"updateVersion,omitempty"`
+	// Specifies information necessary for horizontal scaling
+	HorizontalScaling *SolrHorizontalScalingSpec `json:"horizontalScaling,omitempty"`
 	// Specifies information necessary for vertical scaling
 	VerticalScaling *SolrVerticalScalingSpec `json:"verticalScaling,omitempty"`
 	// Specifies information necessary for volume expansion
@@ -71,6 +73,8 @@ type SolrOpsRequestSpec struct {
 	Configuration *SolrCustomConfigurationSpec `json:"configuration,omitempty"`
 	// Specifies information necessary for configuring TLS
 	TLS *TLSSpec `json:"tls,omitempty"`
+	// Specifies information necessary for configuring authSecret of the database
+	Authentication *AuthSpec `json:"authentication,omitempty"`
 	// Timeout for each step of the ops request in second. If a step doesn't finish within the specified timeout, the ops request will result in failure.
 	Timeout *metav1.Duration `json:"timeout,omitempty"`
 	// ApplyOption is to control the execution of OpsRequest depending on the database state.
@@ -104,6 +108,17 @@ type SolrVolumeExpansionSpec struct {
 type SolrUpdateVersionSpec struct {
 	// Specifies the target version name from catalog
 	TargetVersion string `json:"targetVersion,omitempty"`
+}
+
+type SolrHorizontalScalingSpec struct {
+	// Number of combined (i.e. overseer, data, coordinator) node
+	Node *int32 `json:"node,omitempty"`
+	// Number of master nodes
+	Overseer *int32 `json:"overseer,omitempty"`
+	// Number of ingest nodes
+	Coordinator *int32 `json:"coordinator,omitempty"`
+	// Number of data nodes
+	Data *int32 `json:"data,omitempty"`
 }
 
 // SolrCustomConfigurationSpec is the spec for Reconfiguring the solr Settings

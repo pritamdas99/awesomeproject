@@ -54,6 +54,10 @@ type Kafka struct {
 
 // KafkaSpec defines the desired state of Kafka
 type KafkaSpec struct {
+	// AutoOps contains configuration of automatic ops-request-recommendation generation
+	// +optional
+	AutoOps AutoOpsSpec `json:"autoOps,omitempty"`
+
 	// Version of Kafka to be deployed.
 	Version string `json:"version"`
 
@@ -110,7 +114,7 @@ type KafkaSpec struct {
 
 	// DeletionPolicy controls the delete operation for database
 	// +optional
-	DeletionPolicy TerminationPolicy `json:"deletionPolicy,omitempty"`
+	DeletionPolicy DeletionPolicy `json:"deletionPolicy,omitempty"`
 
 	// HealthChecker defines attributes of the health checker
 	// +optional
